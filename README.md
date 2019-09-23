@@ -33,6 +33,8 @@ This plugin extends the functionality of the radio implementation included in th
 
 - Near total control of radio ranges, chat colors, callsigns, and other features via the Helix config menu
 
+   I did some pretty extensive fiddling with the default settings, but I recommend changing the range multipliers & chat colors & such to suit your own server's needs. What works best on `gm_construct` probably won't work best on `rp_city17`.
+
 ### *Required content*
 I have repackaged the Left 4 Dead radio model included with the Clockwork content, along with custom radio sound effects, [into a Workshop addon here.](https://steamcommunity.com/sharedfiles/filedetails/?id=1866763987) To be clear: *I did not create this model,* although I did customize the sounds myself. I believe that it is sufficient for clients to download the addon to see the radio and hear the sound effects; however, I still recommended including this addon in your server's Workshop collection if only so the physics of the radio model will work on your server. If for some reason that isn't working for you, or if you would just like the raw files themselves for some other reason, they can be found under `plugins\content`.
 
