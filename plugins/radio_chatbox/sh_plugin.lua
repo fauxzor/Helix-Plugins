@@ -10,6 +10,12 @@ ix.config.Add("enableRadioChatbox", true, "Whether or not to show radio messages
 })
 
 if (CLIENT) then
+
+	netstream.Hook("Frequency", function(oldFrequency)
+		Derma_StringRequest("Frequency", "What would you like to set the frequency to?", oldFrequency, function(text)
+			ix.command.Send("SetFreq", text)
+		end)
+	end)
 	
 	function PLUGIN:ChatboxPositionChanged(x, y, width, height)
 		--print(ix.gui.chat:GetSize())
@@ -74,11 +80,13 @@ if (CLIENT) then
 	function chat.AddText(...)
 		local chat_class = CHAT_CLASS
 		local radiocheck = false
-
-		if (ix.config.Get("enableRadioChatbox") == false) then
-			radiocheck = false
-		elseif ((chat_class.uniqueID == "radio") or (chat_class.uniqueID == "radio_yell")) then
-			radiocheck = true
+		
+		if (chat_class != nil) then
+			if (ix.config.Get("enableRadioChatbox") == false) then
+				radiocheck = false
+			elseif ((chat_class.uniqueID == "radio") or (chat_class.uniqueID == "radio_yell")) then
+				radiocheck = true
+			end
 		end
 
 		if (IsValid(ix.gui.chat) and !radiocheck) then
