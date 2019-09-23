@@ -43,5 +43,5 @@ This plugin creates a new chatbox above the regular chatbox, for radio chat only
 
 
 <p align="center">
-  <img width="790" height="421" src="https://github.com/fauxzor/Helix-Plugins/blob/master/demon1.png">
+  <img width="772" height="443" src="https://github.com/fauxzor/Helix-Plugins/blob/master/demon1.png">
 </p>
