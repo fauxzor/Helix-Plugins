@@ -12,6 +12,10 @@ If you have any questions about my plugins, or would just like to get in touch w
 </p>
 
 This plugin extends the functionality of the radio implementation included in the default Helix HL2RP schema. Features include:
+- Separation of non-local radio chat from local radio chat
+
+   In the past, radio scripts have not made a strong distinction between radio chatter and "regular" chatter. Even if someone is standing within earshot of you when they transmit, you will often receive their message as a radio transmission in your chatbox, as will they, even though they were heard far more clearly in the "real world" than on the radio. This sort of feedback encourages players to use the radio even when they don't have to, which clutters up the chatbox and in my opinion subverts the entire point of a roleplaying script, which is to provide an elegant "local chat" solution. Now, if you transmit on the radio, you will see your own message as IC chat, as will everyone around you including people with active radios on your frequency. You will only receive radio messages as such when you are out of earshot of the speaker.
+
 - Distance-based radio scrambling, with modifiers for being indoors, using a long range radio, yelling, etc.
 - New "radio yell" command, with different chat color & less scrambling
 - The ability to set one radio as "Active" & to listen to multiple different radios at a time
