@@ -618,6 +618,9 @@ function PLUGIN:OverwriteClasses()
 		end
 		
 		function COMMAND:OnRun(client, frequency)
+			if string.len(frequency) < 4 then
+				frequency = frequency .. '.0'
+			end
 			local character = client:GetCharacter()
 			local inventory = character:GetInventory()
 			--local itemTable = inventory:GetItemsByUniqueID("handheld_radio", true)
@@ -650,7 +653,7 @@ function PLUGIN:OverwriteClasses()
 				end
 
 				if (active == 1) then
-					if (string.find(frequency, "^%d%d%d%.%d$")) then
+					if string.find(frequency, "^%d%d%d%.%d$") then
 						character:SetData("frequency", frequency)
 						
 						itemTable:SetData("frequency", frequency)
@@ -658,7 +661,7 @@ function PLUGIN:OverwriteClasses()
 						client:Notify(string.format("You have set your radio frequency to %s.", frequency))
 					end
 				elseif (itemTable and (numEnabled == 1) and (active == 0)) then
-					if (string.find(frequency, "^%d%d%d%.%d$")) then
+					if string.find(frequency, "^%d%d%d%.%d$") then
 						character:SetData("frequency", frequency)
 						
 						itemTable:SetData("active", true)
@@ -667,7 +670,7 @@ function PLUGIN:OverwriteClasses()
 						client:Notify(string.format("You have set your radio frequency to %s.", frequency))
 					end
 				elseif (numEnabled > 1) then
-					client:Notify("You do not have an active radio!")
+					client:Notify("Activate one of your radios to set the frequency.")
 					-- for k, v in ipairs(radios) do
 						-- if (v:GetData("enabled", false)) then
 						
