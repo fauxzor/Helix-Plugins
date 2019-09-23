@@ -15,10 +15,16 @@ This plugin extends the functionality of the radio implementation included in th
 - Distance-based radio scrambling, with modifiers for being indoors, using a long range radio, yelling, etc.
 - New "radio yell" command, with different chat color & less scrambling
 - The ability to set one radio as "Active" & to listen to multiple different radios at a time
+
+   Your active radio is indicated with a green square in your inventory. A radio that you are listening to, but not transmitting on, is marked as yellow. For reasons, changing your radio's frequency by using the "Frequency" command in your inventory will make it your active radio. The `\setFreq` command will only change the frequency of your active radio. If you only have one radio in your inventory, it should become active as soon as you turn it on; however, it is possible to be without an active radio in certain situations. You should receive a notification if this is the case when you try to transmit.
+
 - Radio callsigns, which are used instead of the character's name for radio chat and shown in the "You" menu
 - Long range radio item, with different chat color & less scrambling
 - Radio sound effects/tones for transmitting and receiving messages, modified by distance
 - "Silence" command for the radio, which disables your own radio tones
+
+   A silenced radio has a red line through the active/enabled marker. This does not stop you from hearing other people's radio tones if they are nearby-- overall control of whether or not sounds are activated is handled in the Helix config menu.
+
 - Near total control of radio ranges, chat colors, callsigns, and other features via the Helix config menu
 
 ### *Required content*
