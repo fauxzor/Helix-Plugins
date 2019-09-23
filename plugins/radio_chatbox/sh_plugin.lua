@@ -11,12 +11,6 @@ ix.config.Add("enableRadioChatbox", true, "Whether or not to show radio messages
 
 if (CLIENT) then
 
-	netstream.Hook("Frequency", function(oldFrequency)
-		Derma_StringRequest("Frequency", "What would you like to set the frequency to?", oldFrequency, function(text)
-			ix.command.Send("SetFreq", text)
-		end)
-	end)
-	
 	function PLUGIN:ChatboxPositionChanged(x, y, width, height)
 		--print(ix.gui.chat:GetSize())
 		--print(self.rpanel:GetSize())
