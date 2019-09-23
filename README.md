@@ -16,7 +16,7 @@ This plugin extends the functionality of the radio implementation included in th
 - New "radio yell" command, with different chat color & less scrambling
 - The ability to set one radio as "Active" & to listen to multiple different radios at a time
 
-   Your active radio is indicated with a green square in your inventory. A radio that you are listening to, but not transmitting on, is marked as yellow. For reasons, changing your radio's frequency by using the "Frequency" command in your inventory will make it your active radio. The `\setFreq` command will only change the frequency of your active radio. If you only have one radio in your inventory, it should become active as soon as you turn it on; however, it is possible to be without an active radio in certain situations. You should receive a notification if this is the case when you try to transmit.
+   Your active radio is indicated with a green square in your inventory. A radio that you are listening to, but not transmitting on, is marked as yellow. For reasons, changing your radio's frequency by using the "Frequency" command in your inventory will make it your active radio. The `\setFreq` command will only change the frequency of your active radio. If you only have one radio in your inventory, it should become active as soon as you turn it on; however, it is possible to be without an active radio in certain situations. You should receive a notification if this is the case when you try to transmit or `\setFreq` without an active radio (or if you have another problem like having no radios).
 
 - Radio callsigns, which are used instead of the character's name for radio chat and shown in the "You" menu
 - Long range radio item, with different chat color & less scrambling
