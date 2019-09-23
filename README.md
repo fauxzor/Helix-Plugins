@@ -2,6 +2,11 @@
 A repository for plugins I have created to be used with Helix, a roleplaying script for Garry's Mod. I hope you enjoy my work! Thank you to the Helix developers (and the devs that came before them) for laying the framework for me to build upon. I would not have gotten anywhere starting from scratch.
 
 ## 1. Extended Radio
+
+<p align="center">
+  <img width="550" height="550" src="https://github.com/fauxzor/Helix-Plugins/blob/master/extendedradio_content.jpg">
+</p>
+
 This plugin extends the functionality of the radio implementation included in the default Helix HL2RP schema. Features include:
 - Distance-based radio scrambling, with modifiers for being indoors, using a long range radio, yelling, etc.
 - New "radio yell" command, with different chat color & less scrambling
