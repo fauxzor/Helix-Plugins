@@ -8,6 +8,39 @@ PLUGIN.description = "A standalone radio plugin with extended functionality over
 -- Anonymous names, if radio callsigns are anonymous
 local radioanon = {"Somebody", "Someone", "A voice", "A person"}
 
+-- Clientside hooks
+if (CLIENT) then
+
+	-- Channel handling
+	local function setTheChannel(ch)
+		ix.command.Send("SetChan", ch)
+	end
+	
+	netstream.Hook("Channel", function(this)
+		Derma_Query("Choose your channel", "Channel selection",
+		"CH1", function()
+			setTheChannel("1")
+		end, 
+		"CH2", function() 
+			setTheChannel("2")
+		end, 
+		"CH3", function()
+			setTheChannel("3")
+		end,
+		"CH4", function()
+			setTheChannel("4")
+		end)
+	end)
+
+	-- Frequency handling
+	netstream.Hook("Frequency", function(oldFrequency)
+		Derma_StringRequest("Frequency", "What would you like to set the frequency to?", oldFrequency, function(text)
+			ix.command.Send("SetFreq", text)
+		end)
+	end)
+	
+end
+
 -- Sets up configurations
 ix.config.Add("radioColor",Color(164,224,91), "The default color for radio chat.", nil, {category = "Extended Radio"})
 --ix.config.Add("radioYellColor",Color(164+30,224+30,91+30), "The default color for yelling in radio chat.", nil, {category = "Extended Radio"})
@@ -15,7 +48,7 @@ ix.config.Add("longRangeColor", Color(255,139,82), "The default color for long r
 --ix.config.Add("longRangeYellColor",Color(255,139+30,82+30), "The default color for yelling in long range radio chat.", nil, {category = "Extended Radio"})
 
 ix.config.Add("radioFreqColor",Color(190,190,190), "The default color for radio frequencies.", nil, {category = "Extended Radio"})
-ix.config.Add("longRangeFreqColor", Color(255,255,255), "The default color for long range radio frequencies.", nil, {category = "Extended Radio"})
+ix.config.Add("activeFreqColor", Color(255,255,255), "The default color for long range radio frequencies.", nil, {category = "Extended Radio"})
 
 ix.config.Add("radioYellBig", true, "Whether to use larger font sizes for yelling in the radio.", nil, {
 	category = "Extended Radio"
@@ -232,13 +265,22 @@ function PLUGIN:OverwriteClasses()
 				for k,v in pairs(longranges) do radios[#radios+1] = v end
 			end
 			
+			
+			-- Character-level frequency/channel handling
+			local testA = speaker:GetCharacter():GetData("frequency") == character:GetData("frequency")
+			local testB = speaker:GetCharacter():GetData("channel") == character:GetData("channel")
+			local test1 = (testA and testB)
+			--print(test1)
+			
 			if (listener:GetPos():Distance(speaker:GetPos()) > self:GetRange()) then
 				for k, v in pairs(radios) do
-					if (v:GetData("enabled", false) and speaker:GetCharacter():GetData("frequency") == character:GetData("frequency")) then
-						bHasRadio = true
-						break
-					end
-					if (v:GetData("enabled", false) and speaker:GetCharacter():GetData("frequency") == v:GetData("frequency")) then
+					
+					-- Item-level frequency/channel handling
+					local testC = speaker:GetCharacter():GetData("frequency") == v:GetData("frequency")
+					local testD = speaker:GetCharacter():GetData("channel") == v:GetData("channel")
+					local test2 = (testC and testD)
+					
+					if ( v:GetData("enabled", false) and (test1 or test2) ) then
 						bHasRadio = true
 						break
 					end
@@ -309,25 +351,60 @@ function PLUGIN:OverwriteClasses()
 			--
 			
 			local theFreq = string.format("[%s *MHz*] ", data.freq) -- LocalPlayer():GetCharacter():GetData("frequency"))
+			local theChan = string.format("[*CH%s*] ", data.chan)
 
 			local newColor = self:GetColor()
 			local newFreqColor
+			local newChanColor
 			if data.lrange then
 				newColor = self:GetColor(true) -- New LR chat color
-				--newFreqColor = ix.config.Get("longRangeFreqColor",Color(255,255,255)) -- New LR freq color
+				--newFreqColor = ix.config.Get("activeFreqColor",Color(255,255,255)) -- New LR freq color
 			end
 			
 			if (data.freq == LocalPlayer():GetCharacter():GetData("frequency","100.0")) then
-				newFreqColor = ix.config.Get("longRangeFreqColor",Color(255,255,255)) -- New LR freq color
+				newFreqColor = ix.config.Get("activeFreqColor",Color(255,255,255)) -- New LR freq color
 			else
 				newFreqColor = ix.config.Get("radioFreqColor",Color(190,190,190))
+			end
+			if (data.chan == LocalPlayer():GetCharacter():GetData("channel","1")) then
+				newChanColor = ix.config.Get("activeFreqColor",Color(255,255,255)) -- New LR freq color
+			else
+				newChanColor = ix.config.Get("radioFreqColor",Color(190,190,190))
 			end
 			
 			-- Sound handling
 			--radioSilence(LocalPlayer(), dist, data.freq)
 			--
+			
+			local character = LocalPlayer():GetCharacter()
+			local inventory = character:GetInventory()
+			local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+			local longranges = inventory:GetItemsByUniqueID("longrange", true)
+			-- Puts the long ranges in with regular radios
+			if (#longranges > 0) then
+				for k,v in pairs(longranges) do radios[#radios+1] = v end
+			end
+			
+			local tally = 0
+			local freqList = {}
+			for k,v in pairs(radios) do
+				if (v:GetData("enabled", false)) then
+					freqList[tally] = v:GetData("frequency","100.0")
+					if (tally > 0 and (freqList[tally] != freqList[tally-1])) then
+						tally = -1
+						break
+					end
+					tally = tally + 1
+				end
+			end
 
-			chat.AddText(newFreqColor, theFreq, newColor, string.format(self:GetFormat(), name, text))
+			-- If you have more than one radio, and they're on different frequencies, show the frequency next to the name
+			-- Otherwise just show channel
+			if (tally == -1) then
+				chat.AddText(newFreqColor, theFreq, newChanColor, theChan, newColor, string.format(self:GetFormat(), name, text))
+			else
+				chat.AddText(newChanColor, theChan, newColor, string.format(self:GetFormat(), name, text))
+			end
 		end
 
 		ix.chat.Register("radio", CLASS)
@@ -610,7 +687,7 @@ function PLUGIN:OverwriteClasses()
 
 			if (item) then
 				if (!client:IsRestricted()) then
-					ix.chat.Send(client, "radio", message,nil,nil,{callsign=call, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency")})
+					ix.chat.Send(client, "radio", message,nil,nil,{callsign=call, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
 					ix.chat.Send(client, "radio_eavesdrop", message,nil,nil,{quiet=item:GetData("silenced")})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
@@ -680,7 +757,7 @@ function PLUGIN:OverwriteClasses()
 
 			if (item) then
 				if (!client:IsRestricted()) then
-					ix.chat.Send(client, "radio_yell", message,nil,nil,{callsign=call, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency")})
+					ix.chat.Send(client, "radio_yell", message,nil,nil,{callsign=call, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
 					ix.chat.Send(client, "radio_eavesdrop_yell", message,nil,nil,{quiet=item:GetData("silenced")})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
@@ -747,7 +824,7 @@ function PLUGIN:OverwriteClasses()
 
 			if (item) then
 				if (!client:IsRestricted()) then
-					ix.chat.Send(client, "radio_whisper", message,nil,nil,{callsign=call, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency")})
+					ix.chat.Send(client, "radio_whisper", message,nil,nil,{callsign=call, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
 					ix.chat.Send(client, "radio_eavesdrop_whisper", message,nil,nil,{quiet=item:GetData("silenced")})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
@@ -815,7 +892,7 @@ function PLUGIN:OverwriteClasses()
 				if (active == 1) then
 					if string.find(frequency, "^%d%d%d%.%d$") then
 						character:SetData("frequency", frequency)
-						
+						character:SetData("channel", itemTable:GetData("channel","1"))
 						itemTable:SetData("frequency", frequency)
 
 						client:Notify(string.format("You have set your radio frequency to %s.", frequency))
@@ -823,7 +900,7 @@ function PLUGIN:OverwriteClasses()
 				elseif (itemTable and (numEnabled == 1) and (active == 0)) then
 					if string.find(frequency, "^%d%d%d%.%d$") then
 						character:SetData("frequency", frequency)
-						
+						character:SetData("channel", itemTable:GetData("channel","1"))						
 						itemTable:SetData("active", true)
 						itemTable:SetData("frequency", frequency)
 
@@ -855,6 +932,71 @@ function PLUGIN:OverwriteClasses()
 		ix.command.Add("SetFreq", COMMAND)
 	end
 
+	--
+	
+	do
+		local COMMAND = {}
+		COMMAND.arguments = ix.type.text
+
+		function COMMAND:TableLength(T)
+			local count = 0
+			for _ in pairs(T) do count = count + 1 end
+			return count
+		end
+		
+		function COMMAND:OnRun(client, chan)
+		
+			-- Valid channel handling
+			local validchan = false
+			for _,v in pairs({"1","2","3","4"}) do
+				if (chan == v) then
+					validchan = true
+					break
+				end
+			end
+			if !validchan then
+				client:Notify("Invalid channel specification.")
+				return
+			end
+
+			local character = client:GetCharacter()
+			local inventory = character:GetInventory()
+			local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+			local longranges = inventory:GetItemsByUniqueID("longrange", true)
+			-- Puts the long ranges in with regular radios
+			if (#longranges > 0) then
+				for k,v in pairs(longranges) do radios[#radios+1] = v end
+			end
+			
+			--local active = false
+			
+			local itemTable
+			if (self:TableLength(radios) < 1) then
+				client:Notify("You do not have a radio!")
+			else
+				for k, v in ipairs(radios) do
+					if (v:GetData("enabled", false) and v:GetData("active")) then
+						itemTable = v
+						--active = true
+						break
+					end
+				end
+						
+				if itemTable then
+					character:SetData("channel", chan)
+					
+					itemTable:SetData("channel", chan)
+
+					client:Notify(string.format("You have set your radio channel to %s.", chan))
+				else
+					client:Notify("You do not have an active radio.")
+				end
+			end
+		end
+
+		ix.command.Add("SetChan", COMMAND)
+	end
+	
 	--
 
 	do
