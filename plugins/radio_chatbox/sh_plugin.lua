@@ -84,15 +84,18 @@ if (CLIENT) then
 		if (chat_class != nil) then
 			if (ix.config.Get("enableRadioChatbox") == false) then
 				radiocheck = false
-			elseif ((chat_class.uniqueID == "radio") or (chat_class.uniqueID == "radio_yell")) then
+			elseif ((chat_class.uniqueID == "radio") or (chat_class.uniqueID == "radio_yell") or (chat_class.uniqueID == "radio_whisper")) then
 				radiocheck = true
 			end
 		end
 
+		--print(IsValid(PLUGIN.rpanel))
 		if (IsValid(ix.gui.chat) and !radiocheck) then
+		--print("Hi")
 			ix.gui.chat:AddMessage(...)
 			--print("Regular")
 		elseif (IsValid(PLUGIN.rpanel) and radiocheck) then
+		--	print("Here now")
 			PLUGIN.rpanel:AddMessage(...)
 			--print("New")
 		end
