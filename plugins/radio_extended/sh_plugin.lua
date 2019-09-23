@@ -20,13 +20,16 @@ ix.config.Add("longRangeFreqColor", Color(255,255,255), "The default color for l
 ix.config.Add("radioYellBig", true, "Whether to use larger font sizes for yelling in the radio.", nil, {
 	category = "Extended Radio"
 })
+ix.config.Add("radioWhisperSmall", true, "Whether to use smaller font sizes for whispering in the radio.", nil, {
+	category = "Extended Radio"
+})
 
 -- Max map size in Source is 32768 units, and chat range is default 280 units, so max possible multiplier should be about 120
 -- However, radio is garbled as the square of the distance, so the maximum "effective range" is actually (much) less than that
 -- To say nothing of modifiers, and different map sizes/configurations...
 -- Therefore the max multiplier can go up to 135 (only ~75% garbled at max map distance) although I recommend using a much smaller value
 -- Long range radios have a separate multiplier that can be jacked up & people aren't usually talking across the map anyways
-ix.config.Add("radioRangeMult", 75, "Max radio range = IC chat range * mult", nil, {
+ix.config.Add("radioRangeMult", 100, "Max radio range = IC chat range * mult", nil, {
 	data = {min = 1, max = 135},
 	category = "Extended Radio"
 })
@@ -55,7 +58,7 @@ ix.config.Add("radioSounds", true, "Toggles radio sending/receiving beeps & boop
 
 function playSound(target,voiceprefix,sending,distance) -- Fun new function to more easily play radio send/receive sounds
 
-	local maxRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult", 75)
+	local maxRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult", 100)
 	local distance = distance or 0
 	local distFrac = math.min(1, (distance/maxRange)^2)
 	if (!ix.config.Get("garbleRadio",true)) then
@@ -251,7 +254,7 @@ function PLUGIN:OverwriteClasses()
 
 		function CLASS:OnChatAdd(speaker, text, bAnonymous, data)
 		
-			local maxRadioRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult",75)
+			local maxRadioRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult",100)
 			local dist = (1 - self:GetMult()) * LocalPlayer():GetPos():Distance(speaker:GetPos())
 			--frac = 100*math.min(1, (dist / maxRadioRange )^2) -- Inverse square law
 			
@@ -314,7 +317,7 @@ function PLUGIN:OverwriteClasses()
 				--newFreqColor = ix.config.Get("longRangeFreqColor",Color(255,255,255)) -- New LR freq color
 			end
 			
-			if (data.freq == LocalPlayer():GetCharacter():GetData("frequency","000.0")) then
+			if (data.freq == LocalPlayer():GetCharacter():GetData("frequency","100.0")) then
 				newFreqColor = ix.config.Get("longRangeFreqColor",Color(255,255,255)) -- New LR freq color
 			else
 				newFreqColor = ix.config.Get("radioFreqColor",Color(190,190,190))
@@ -366,6 +369,43 @@ function PLUGIN:OverwriteClasses()
 		
 		CLASS.uniqueID = "radio_yell" -- Just to be sure that particular key is overwritten properly
 		ix.chat.Register("radio_yell", CLASS)
+	end
+	-- LAST ONE FOR WHISPERING
+		do
+		
+		-- Populates the class with the info from the radio class WITHOUT overwriting the original class
+		local ALIAS
+		ALIAS = {}
+        for orig_key, orig_value in pairs(ix.chat.classes.radio) do
+            ALIAS[orig_key] = orig_value
+        end
+		
+		local CLASS = ALIAS
+		
+		CLASS.color = ix.config.Get("radioColor",Color(164-35,224-35,91-35)) -- Old: Color(75, 150, 50)
+		CLASS.format = "%s whispers in the radio: \"%s\""
+		CLASS.mult = -0.3
+	
+		function CLASS:GetColor(speaker, text)
+			local color = ix.config.Get("radioColor",Color(164,224,91))
+			local lcolor = ix.config.Get("longRangeColor", Color(255,139,82))
+			
+			if speaker then
+				color = lcolor
+			end
+			
+			-- Make the whisper chat slightly dimmer than IC chat.
+			return Color(color.r - 35, color.g - 35, color.b - 35)
+		end
+		
+		function CLASS:GetRange()
+			local range = ix.config.Get("chatRange", 280) * 0.25 -- Whispering is 0.25 times as far
+
+			return range
+		end
+		
+		CLASS.uniqueID = "radio_whisper" -- Just to be sure that particular key is overwritten properly
+		ix.chat.Register("radio_whisper", CLASS)
 	end
 	------------------------------------------------
 	do
@@ -464,6 +504,60 @@ function PLUGIN:OverwriteClasses()
 		CLASS.uniqueID = "radio_eavesdrop_yell" -- to be sure
 		ix.chat.Register("radio_eavesdrop_yell", CLASS)
 	end
+	
+		do
+	
+		-- Populates the class with the info from the radio eavesdrop class WITHOUT overwriting the original class
+		local ALIAS
+		ALIAS = {}
+        for orig_key, orig_value in pairs(ix.chat.classes.radio_eavesdrop) do
+            ALIAS[orig_key] = orig_value
+        end
+		
+		local CLASS = ALIAS
+	
+		--local CLASS = {}
+		CLASS.color = ix.config.Get("chatColor")
+		CLASS.format = "%s whispers in the radio: \"%s\""
+
+		function CLASS:GetColor(speaker, text)
+			local color = ix.config.Get("chatColor")
+			
+			-- Make the whisper chat slightly dimmer than IC chat.
+			return Color(color.r - 35, color.g - 35, color.b - 35)
+		end
+		
+		function CLASS:GetRange()
+			local range = 0.25*ix.config.Get("chatRange", 280)
+
+			return range
+		end
+
+		-- function CLASS:CanHear(speaker, listener)
+			-- if (ix.chat.classes.radio_yell:CanHear(speaker, listener)) then
+				-- return false
+			-- end
+
+			-- local chatRange = ix.config.Get("chatRange", 280)
+			
+			-- return (listener:GetPos():Distance(speaker:GetPos()) <= (2*chatRange))
+		-- end
+
+		-- function CLASS:OnChatAdd(speaker, text, bAnonymous, data)
+			-- local yellMult = 0.25 -- Treats a yelling person on the radio at yellMult percent closer to listener
+			-- local dist = (1 - yellMult) * LocalPlayer():GetPos():Distance(speaker:GetPos())
+			-- -- text = string.format("<:: %s ::>", text)
+			-- --endChatter(speaker,dist)
+			
+			-- -- Sound handling
+			-- if !data.quiet then playSound(speaker, "npc/metropolice/vo/on", true) end
+			
+			-- chat.AddText(self:GetColor(speaker,text), string.format(self.format, speaker:Name(), text))
+		-- end
+
+		CLASS.uniqueID = "radio_eavesdrop_whisper" -- to be sure
+		ix.chat.Register("radio_eavesdrop_whisper", CLASS)
+	end
 
 	-- 
 	-- Overwrites the existing "/radio" chat command with new functionality
@@ -539,7 +633,6 @@ function PLUGIN:OverwriteClasses()
 	-- Overwrites the existing "/radio" chat command with new functionality
 	--
 	do
-	
 		local COMMAND = {}
 		COMMAND.arguments = ix.type.text
 		
@@ -604,6 +697,73 @@ function PLUGIN:OverwriteClasses()
 		end
 
 		ix.command.Add("RadioYell", COMMAND)
+	end
+	-----
+	do
+		local COMMAND = {}
+		COMMAND.arguments = ix.type.text
+		
+		COMMAND.alias = {"rw"} -- NEW
+		
+		function COMMAND:OnRun(client, message)
+			local character = client:GetCharacter()
+			local radios = character:GetInventory():GetItemsByUniqueID("handheld_radio", true)
+			local longranges = character:GetInventory():GetItemsByUniqueID("longrange", true)
+			-- Puts the long ranges in with regular radios
+			if (#longranges > 0) then
+				for k,v in pairs(longranges) do radios[#radios+1] = v end
+			end
+			
+			local transmitLong = false
+			local item
+			
+			-- Callsign handling
+			local call
+			local defCall
+			local names = {"Somebody", "Someone", "A voice", "A person"}
+			if (ix.config.Get("defaultCallsign") == 1) then
+				defCall = client:Name()
+			else
+				defCall = names[math.random(#names)]
+			end
+			
+			if ix.config.Get("enableCallsigns",true) then
+				call = character:GetData("callsign",defCall)
+			else
+				call = client:Name()
+			end
+
+			local enabl = false
+			for k, v in ipairs(radios) do
+				if (v:GetData("enabled", false)) then
+					enabl = true
+					if (v:GetData("active")) then
+						item = v
+						transmitLong = (v.uniqueID == "longrange")
+						break
+					end
+				end
+			end
+
+			if (item) then
+				if (!client:IsRestricted()) then
+					ix.chat.Send(client, "radio_whisper", message,nil,nil,{callsign=call, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency")})
+					ix.chat.Send(client, "radio_eavesdrop_whisper", message,nil,nil,{quiet=item:GetData("silenced")})
+					--endChatter(client,0)
+					--playSound(client, "npc/metropolice/vo/on", true)
+				else
+					return "@notNow"
+				end
+			elseif (#radios > 0 and enabl and (!client:GetCharacter():GetData("frequency") or client:GetCharacter():GetData("frequency") == "")) then
+				client:Notify("You do not have an active radio.")
+			elseif (#radios > 0 and !enabl) then
+				return "@radioNotOn"
+			else
+				return "@radioRequired"
+			end
+		end
+
+		ix.command.Add("RadioWhisper", COMMAND)
 	end
 
 	-----
