@@ -17,7 +17,7 @@ This plugin extends the functionality of the radio implementation included in th
 - "Silence" command for the radio, which disables your own radio tones
 - Near total control of radio ranges, chat colors, callsigns, and other features via the Helix config menu
 
-#### *Required content*
+### *Required content*
 I have repackaged the Left 4 Dead radio model included with the Clockwork content, along with the radio sound effects, [into a Workshop addon here.](https://steamcommunity.com/sharedfiles/filedetails/?id=1866763987) To be clear: *I did not create this model!* I believe that it is sufficient for clients to download the addon to see the radio and hear the sound effects; however, I still recommended including this addon in your server's Workshop collection if only so the physics of the radio model will work on your server. If for some reason that isn't working for you, or if you would just like the raw files themselves, they can be found under `plugins\content`.
 
 ## 2. Radio Chatbox
