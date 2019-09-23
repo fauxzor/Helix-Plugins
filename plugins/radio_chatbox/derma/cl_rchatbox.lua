@@ -23,7 +23,17 @@ function PLUGIN:LoadFonts(font, genericFont)
 		weight = 800,
 		antialias = true
 	})
+	
+	surface.CreateFont("ixRadioWhisperFont", {
+		font = "ixChatFont",
+		size = math.max(ScreenScale(6), 16) * ix.option.Get("chatFontScale", 1),
+		extended = true,
+		weight = 1200,
+		antialias = true
+	})
 end
+
+
 
 local chatBorder = 32
 local maxChatEntries = 50
@@ -134,6 +144,9 @@ function PANEL:AddLine(elements, bShouldScroll)
 	
 	if (ix.config.Get("radioYellBig", true) and (CHAT_CLASS.uniqueID == "radio_yell")) then
 		buffer[#buffer] = "<font=ixRadioFont>" .. buffer[#buffer] .. "</font>"
+	end
+	if (ix.config.Get("radioWhisperSmall", true) and (CHAT_CLASS.uniqueID == "radio_whisper")) then
+		buffer[#buffer] = "<font=ixRadioWhisperFont>" .. buffer[#buffer] .. "</font>"
 	end
 
 	local panel = self:Add("ixChatMessage")
@@ -367,15 +380,15 @@ end
 -- called when a message needs to be added to applicable tabs
 function PANEL:AddMessage(...)
 	local class = CHAT_CLASS and CHAT_CLASS.uniqueID or "notice"
-	local radiocheck = false
-	if (class == "radio" or class == "radio_yell") then
-		radiocheck = true
-	end
+	-- local radiocheck = false
+	-- if (class == "radio" or class == "radio_yell" or class == "radio_whisper") then
+		-- radiocheck = true
+	-- end
 
 	-- track whether or not the message was filtered out in the active tab
 	local bShown = false
 
-	if (self.history and radiocheck) then
+	if (self.history) then -- and radiocheck) then
 		self.history:AddLine({...}, true)
 		bShown = true
 	end
