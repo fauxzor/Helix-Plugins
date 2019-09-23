@@ -4,7 +4,7 @@ A repository for plugins I have created to be used with Helix, a roleplaying scr
 ## 1. Extended Radio
 
 <p align="center">
-  <src="https://github.com/fauxzor/Helix-Plugins/blob/master/extended_radio_short.png">
+  <img width="550" height="256" src="https://github.com/fauxzor/Helix-Plugins/blob/master/extended_radio_short.png">
 </p>
 
 This plugin extends the functionality of the radio implementation included in the default Helix HL2RP schema. Features include:
