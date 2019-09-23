@@ -18,6 +18,10 @@ This plugin extends the functionality of the radio implementation included in th
    
    With "Extended Radio", your radio transmissions and any that you receive within earshot of the speaker will be displayed as local chat and shown in the regular chatbox. Any radio transmissions you receive from someone out of earshot will be displayed as a radio message, with all the associated aesthetics & sound effects.
 
+- **Radio channels subordinate to each frequency**
+
+   The channel of your active radio can be changed using `\setChan` or by using the "Channel" command on the radio item in your inventory. Each frequency has 4 channels-- 1, 2, 3, and 4. You must be on the same channel as the speaker to receive their message, even if you are also on the same frequency. To reduce chatbox clutter, if you only have one radio enabled, you will only see the speaker's channel next to their name when you receive a radio message; if you have more than one radio enabled (and they're both not on the same frequency), you will also see their frequency, so you know which one to reply on.
+
 - **Distance-based radio scrambling, with modifiers for being indoors, using a long range radio, yelling, etc.**
 
    These modifiers remain a work in progress, but the general idea is that:
