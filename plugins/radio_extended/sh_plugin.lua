@@ -8,6 +8,14 @@ PLUGIN.description = "A standalone radio plugin with extended functionality over
 -- Anonymous names, if radio callsigns are anonymous
 local radioanon = {"Somebody", "Someone", "A voice", "A person"}
 
+-- Serverside voice handling
+-- If you care about applying the "rules" of the radio to voice chat, enable this
+-- Otherwise, keep it disabled for performance reasons (this is called 3 times per tick)
+-- function PLUGIN:PlayerCanHearPlayersVoice(listener,talker)
+	-- return ( (listener:GetCharacter():GetData("frequency","100.0") == talker:GetCharacter():GetData("frequency","100.0")) and (listener:GetCharacter():GetData("channel","1") == talker:GetCharacter():GetData("channel","1")))
+-- end
+
+
 -- Clientside hooks
 if (CLIENT) then
 
@@ -1150,10 +1158,6 @@ function PLUGIN:CreateCharacterInfo(panel)
 	elseif (!ix.config.Get("enableCallsigns") and IsValid(panel.callsign)) then
 		panel.callsign:Remove()
 	end
-end
-
-function PLUGIN:PlayerCanHearPlayersVoice(listener,talker)
-	return ( (listener:GetCharacter():GetData("frequency","100.0") == talker:GetCharacter():GetData("frequency","100.0")) and (listener:GetCharacter():GetData("channel","1") == talker:GetCharacter():GetData("channel","1")))
 end
 
 -- populates labels in the status screen
