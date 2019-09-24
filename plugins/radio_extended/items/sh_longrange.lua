@@ -29,10 +29,12 @@ end
 
 function ITEM:GetDescription()
 	local enabled = self:GetData("enabled")
-	local ret = string.format(self.description, enabled and "on" or "off", enabled and (" and tuned to " .. self:GetData("frequency", "100.0")) or "")
+	local ret = string.format(self.description, enabled and "on" or "off", enabled and (" and tuned to " .. self:GetData("frequency", "100.0") .. " MHz") or "")
 	
 	if enabled then
-		ret = ret .. "\nIt is set to channel "..self:GetData("channel","1").."."
+		local defCh = "CH"..self:GetData("channel","1")
+		local adStr = self:GetData("ch"..self:GetData("channel","1").."name",defCh)
+		ret = ret.."\nIt is set to channel "..self:GetData("channel","1")..( (adStr != defCh) and ", known as "..adStr.."." or ".")
 	end
 	if (self:GetData("silenced") and enabled) then
 		ret = ret .. " \nRadio tones are currently silenced."
@@ -125,6 +127,50 @@ ITEM.functions.Channel = {
 		
 		netstream.Start(itemTable.player, "Channel")
 		
+		return false
+	end
+}
+
+ITEM.functions.ChannelRename = {
+	
+	OnRun = function(itemTable)
+	
+		-- If it's not active, make it so
+		local character = itemTable.player:GetCharacter()
+		local radios = character:GetInventory():GetItemsByUniqueID("handheld_radio", true)
+		local longranges = character:GetInventory():GetItemsByUniqueID("longrange", true)
+		local bBreak = false
+		
+		-- Puts the long ranges in with regular radios
+		if (#longranges > 0) then
+			for k,v in pairs(longranges) do radios[#radios+1] = v end
+		end
+		
+		if !itemTable:GetData("enabled") then 
+			itemTable:SetData("enabled", true)
+		end
+			
+		if (!itemTable:GetData("active")) then -- if the current radio is on...
+			-- first deactivates all other active radios
+			for k, v in ipairs(radios) do
+				if (v != itemTable and v:GetData("enabled", false) and v:GetData("active",false)) then
+					v:SetData("active",false)
+					--bCanToggle = false
+					--break
+				end
+			end
+			
+			itemTable:SetData("active",true)
+			character:SetData("frequency",itemTable:GetData("frequency","100.0"))
+			character:SetData("channel",itemTable:GetData("channel","1"))
+		end
+		
+		local tab = {}
+		for k,v in pairs({"1","2","3","4"}) do
+			tab[k] = itemTable:GetData("ch"..v.."name","CH"..v)
+		end
+		
+		netstream.Start(itemTable.player, "ChannelRename", tab)
 		return false
 	end
 }
