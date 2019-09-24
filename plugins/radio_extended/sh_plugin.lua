@@ -33,25 +33,6 @@ if (CLIENT) then
 	end)
 	
 	-- Channel renaming
-		-- Channel handling
-	local function turnOffRadios(target)
-		local inventory = target:GetCharacter():GetInventory()
-		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		local longranges = inventory:GetItemsByUniqueID("longrange", true)
-		-- Puts the long ranges in with regular radios
-		if (#longranges > 0) then
-			for k,v in pairs(longranges) do radios[#radios+1] = v end
-		end
-
-		for k, v in pairs(radios) do
-			if (v:GetData("enabled", false)) then
-				v:SetData("enabled",false)
-				--endChatter(target,dist)
-				--break -- Play sound once
-			end
-		end
-	end
-	
 	local function setTheName(ch,nm)
 		ix.command.Send("ChanRename", ch..","..nm)
 	end
@@ -1172,9 +1153,41 @@ function PLUGIN:CreateCharacterInfo(panel)
 end
 
 function PLUGIN:PlayerCanHearPlayersVoice(listener,talker)
-	if ix.chat.classes.radio:CanHear(talker,listener) then
-		return true
+	--local chatRange = ix.config.Get("chatRange",280)
+	local character = listener:GetCharacter()
+	local inventory = character:GetInventory()
+	local bHasRadio = false
+	
+	local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+	local longranges = inventory:GetItemsByUniqueID("longrange", true)
+	-- Puts the long ranges in with regular radios
+	if (#longranges > 0) then
+		for k,v in pairs(longranges) do radios[#radios+1] = v end
 	end
+	
+	
+	-- Character-level frequency/channel handling
+	local testA = talker:GetCharacter():GetData("frequency") == character:GetData("frequency")
+	local testB = talker:GetCharacter():GetData("channel") == character:GetData("channel")
+	local test1 = (testA and testB)
+	--print(test1)
+	
+	if (listener:GetPos():Distance(talker:GetPos()) > self:GetRange()) then
+		for k, v in pairs(radios) do
+			
+			-- Item-level frequency/channel handling
+			local testC = talker:GetCharacter():GetData("frequency") == v:GetData("frequency")
+			local testD = talker:GetCharacter():GetData("channel") == v:GetData("channel")
+			local test2 = (testC and testD)
+			
+			if ( v:GetData("enabled", false) and (test1 or test2) ) then
+				bHasRadio = true
+				break
+			end
+		end
+	end
+
+	return bHasRadio
 end
 
 -- populates labels in the status screen
