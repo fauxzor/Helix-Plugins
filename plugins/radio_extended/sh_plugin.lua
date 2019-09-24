@@ -254,10 +254,6 @@ function radioSilence(target, dist, frequency)
 	end
 end
 
-function PLUGIN:MessageReceived()
-	
-end
-
 function PLUGIN:OverwriteClasses()
 	-- 
 	-- Re-registers & overwrites the existing "radio" chat type
@@ -1172,6 +1168,12 @@ function PLUGIN:CreateCharacterInfo(panel)
 		panel.callsign:DockMargin(0, 0, 0, 8)
 	elseif (!ix.config.Get("enableCallsigns") and IsValid(panel.callsign)) then
 		panel.callsign:Remove()
+	end
+end
+
+function PLUGIN:PlayerCanHearPlayersVoice(listener,talker)
+	if ix.chat.classes.radio:CanHear(talker,listener) then
+		return true
 	end
 end
 
