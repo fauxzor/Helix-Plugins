@@ -16,7 +16,7 @@ if (CLIENT) then
 		ix.command.Send("SetChan", ch)
 	end
 	
-	netstream.Hook("Channel", function(this)
+	netstream.Hook("Channel", function(item)
 		Derma_Query("Choose your channel", "Channel selection",
 		"CH1", function()
 			setTheChannel("1")
@@ -31,7 +31,55 @@ if (CLIENT) then
 			setTheChannel("4")
 		end)
 	end)
+	
+	-- Channel renaming
+		-- Channel handling
+	local function turnOffRadios(target)
+		local inventory = target:GetCharacter():GetInventory()
+		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+		local longranges = inventory:GetItemsByUniqueID("longrange", true)
+		-- Puts the long ranges in with regular radios
+		if (#longranges > 0) then
+			for k,v in pairs(longranges) do radios[#radios+1] = v end
+		end
 
+		for k, v in pairs(radios) do
+			if (v:GetData("enabled", false)) then
+				v:SetData("enabled",false)
+				--endChatter(target,dist)
+				--break -- Play sound once
+			end
+		end
+	end
+	
+	local function setTheName(ch,nm)
+		ix.command.Send("ChanRename", ch..","..nm)
+	end
+		
+	netstream.Hook("ChannelRename", function(names)
+		Derma_Query("Choose channel to rename", "Channel renaming",
+		names[1], function()
+			Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[1], function(text)
+				setTheName("1",text)
+			end)
+		end, 
+		names[2], function()
+			Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[2], function(text)
+				setTheName("2",text)
+			end)
+		end, 
+		names[3], function()
+			Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[3], function(text)
+				setTheName("3",text)
+			end)
+		end, 
+		names[4], function()
+			Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[4], function(text)
+				setTheName("4",text)
+			end)
+		end) 
+	end)
+	
 	-- Frequency handling
 	netstream.Hook("Frequency", function(oldFrequency)
 		Derma_StringRequest("Frequency", "What would you like to set the frequency to?", oldFrequency, function(text)
@@ -296,6 +344,34 @@ function PLUGIN:OverwriteClasses()
 
 		function CLASS:OnChatAdd(speaker, text, bAnonymous, data)
 		
+			-- Inventory searching up front
+			local character = LocalPlayer():GetCharacter()
+			local inventory = character:GetInventory()
+			local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+			local longranges = inventory:GetItemsByUniqueID("longrange", true)
+			-- Puts the long ranges in with regular radios
+			if (#longranges > 0) then
+				for k,v in pairs(longranges) do radios[#radios+1] = v end
+			end
+			
+			local activeradio
+			local tally = 0 -- For determining how to send the chat later
+			local freqList = {}
+			for k,v in pairs(radios) do
+				if (v:GetData("enabled", false)) then
+					if (v:GetData("active")) then
+						activeradio = v
+					end
+					freqList[tally] = v:GetData("frequency","100.0")
+					if (tally > 0 and (freqList[tally] != freqList[tally-1])) then
+						tally = -1
+						break
+					end
+					tally = tally + 1
+				end
+			end
+			--
+			
 			local maxRadioRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult",100)
 			local dist = (1 - self:GetMult()) * LocalPlayer():GetPos():Distance(speaker:GetPos())
 			--frac = 100*math.min(1, (dist / maxRadioRange )^2) -- Inverse square law
@@ -351,7 +427,13 @@ function PLUGIN:OverwriteClasses()
 			--
 			
 			local theFreq = string.format("[%s *MHz*] ", data.freq) -- LocalPlayer():GetCharacter():GetData("frequency"))
-			local theChan = string.format("[*CH%s*] ", data.chan)
+			
+			local channelName = "CH"..data.chan
+			if activeradio then 
+				channelName = activeradio:GetData("ch"..data.chan.."name","CH"..data.chan)
+			end
+				
+			local theChan = string.format("[*%s*] ", channelName)
 
 			local newColor = self:GetColor()
 			local newFreqColor
@@ -375,28 +457,6 @@ function PLUGIN:OverwriteClasses()
 			-- Sound handling
 			--radioSilence(LocalPlayer(), dist, data.freq)
 			--
-			
-			local character = LocalPlayer():GetCharacter()
-			local inventory = character:GetInventory()
-			local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-			local longranges = inventory:GetItemsByUniqueID("longrange", true)
-			-- Puts the long ranges in with regular radios
-			if (#longranges > 0) then
-				for k,v in pairs(longranges) do radios[#radios+1] = v end
-			end
-			
-			local tally = 0
-			local freqList = {}
-			for k,v in pairs(radios) do
-				if (v:GetData("enabled", false)) then
-					freqList[tally] = v:GetData("frequency","100.0")
-					if (tally > 0 and (freqList[tally] != freqList[tally-1])) then
-						tally = -1
-						break
-					end
-					tally = tally + 1
-				end
-			end
 
 			-- If you have more than one radio, and they're on different frequencies, show the frequency next to the name
 			-- Otherwise just show channel
@@ -995,6 +1055,78 @@ function PLUGIN:OverwriteClasses()
 		end
 
 		ix.command.Add("SetChan", COMMAND)
+	end
+	
+	--
+	
+	do
+		local COMMAND = {}
+		COMMAND.arguments = ix.type.text
+
+		function COMMAND:TableLength(T)
+			local count = 0
+			for _ in pairs(T) do count = count + 1 end
+			return count
+		end
+		
+		function COMMAND:OnRun(client, chan)
+		
+			local chan, chanName = chan:match("([^,]+),([^,]+)")
+			local maxChars = 16 -- Maximum number of characters in a new radio name
+			
+			-- Valid channel handling
+			local validchan = false
+			for _,v in pairs({"1","2","3","4"}) do
+				if (chan == v) then
+					validchan = true
+					break
+				end
+			end
+			if !validchan then
+				client:Notify("Invalid channel specification.")
+				return
+			elseif (string.len(chanName) > maxChars) then
+				client:Notify("Your channel name is too long!")
+				return
+			end
+
+			local character = client:GetCharacter()
+			local inventory = character:GetInventory()
+			local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+			local longranges = inventory:GetItemsByUniqueID("longrange", true)
+			-- Puts the long ranges in with regular radios
+			if (#longranges > 0) then
+				for k,v in pairs(longranges) do radios[#radios+1] = v end
+			end
+			
+			--local active = false
+			
+			local itemTable
+			if (self:TableLength(radios) < 1) then
+				client:Notify("You do not have a radio!")
+			else
+				for k, v in ipairs(radios) do
+					if (v:GetData("enabled", false) and v:GetData("active")) then
+						itemTable = v
+						--active = true
+						break
+					end
+				end
+						
+				if itemTable then
+					--character:SetData("channel", chan)
+					
+					local store = "ch"..chan.."name"
+					itemTable:SetData(store, chanName)
+
+					client:Notify(string.format("You have set channel %s's name to %s.", chan,chanName))
+				else
+					client:Notify("You do not have an active radio.")
+				end
+			end
+		end
+
+		ix.command.Add("ChanRename", COMMAND)
 	end
 	
 	--
