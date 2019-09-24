@@ -312,7 +312,7 @@ function PLUGIN:OverwriteClasses()
 				end
 			end
 			
-			if (bHasRadio and (speaker != listener) and !speaker:IsVoiceAudible()) then 
+			if (bHasRadio and (speaker != listener)) then 
 				radioSilence(listener, (1 - self:GetMult()) * listener:GetPos():Distance(speaker:GetPos()), speaker:GetCharacter():GetData("frequency"))
 			end
 			
