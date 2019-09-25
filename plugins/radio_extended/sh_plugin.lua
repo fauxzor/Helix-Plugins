@@ -128,6 +128,17 @@ ix.config.Add("defaultCallsign", 1, "1 = Character name, 2 = Anonymous (Somebody
 	category = "Extended Radio"
 })
 
+ix.config.Add("allowBroadcast", true, "1 = Character name, 2 = Anonymous (Somebody, Someone, etc).", nil, {
+	--data = {min = 1, max = 2},
+	category = "Extended Radio"
+})
+
+ix.config.Add("broadcastLevel", 1, "What types of radios can broadcast on all channels\n1 = Long range only\n2 = Long ranges & regular radios\n3 = All radios & walkies.", nil, {
+	data = {min = 1, max = 3},
+	category = "Extended Radio"
+})
+
+
 ix.config.Add("radioSounds", true, "Toggles radio sending/receiving beeps & boops.", nil, {
 	category = "Extended Radio"
 })
@@ -311,6 +322,7 @@ function PLUGIN:OverwriteClasses()
 				end
 			end
 			local bHasRadio = false
+			
 
 			-- Character-level frequency/channel handling
 			local testA = speaker:GetCharacter():GetData("frequency") == character:GetData("frequency")
@@ -356,6 +368,7 @@ function PLUGIN:OverwriteClasses()
 			end
 			
 			local activeradio
+			local listenWalkie
 			local channelName = "CH"..data.chan
 			local tally = 0 -- For determining how to send the chat later
 			local freqList = {}
@@ -363,6 +376,13 @@ function PLUGIN:OverwriteClasses()
 				if (v:GetData("enabled", false)) then
 					if (v:GetData("frequency","100.0") == data.freq) then
 						channelName = v:GetData("ch"..data.chan.."name","CH"..data.chan)
+						if v.uniqueID == "walkietalkie" then
+							if (tally == 0) then 
+								listenWalkie = true -- Get the walkie talkie channel name
+							else
+								listenWalkie = false -- You're hearing it on another radio
+							end
+						end
 					end
 					if (v:GetData("active")) then
 						activeradio = v
@@ -375,11 +395,11 @@ function PLUGIN:OverwriteClasses()
 					tally = tally + 1
 					if (v.uniqueID == "longrange") then 
 						channelName = v:GetData("ch"..data.chan.."name","CH"..data.chan)
+						listenWalkie = false -- You're hearing it over long range instead
 					end
 				end
 			end
 			--
-			
 			local maxRadioRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult",100)
 			local dist = (1 - self:GetMult()) * LocalPlayer():GetPos():Distance(speaker:GetPos())
 			--frac = 100*math.min(1, (dist / maxRadioRange )^2) -- Inverse square law
@@ -470,7 +490,11 @@ function PLUGIN:OverwriteClasses()
 
 			-- If you have more than one radio, and they're on different frequencies, show the frequency next to the name
 			-- Otherwise just show channel
-			if (tally == -1 and !data.walkie) then
+			if (data.broadcast and !listenWalkie) then
+				chat.AddText(newFreqColor, theFreq, newColor, string.format(self:GetFormat(), name, text))
+			elseif (data.broadcast and listenWalkie) then
+				chat.AddText(newChanColor, theChan, newColor, string.format(self:GetFormat(), name, text))
+			elseif (tally == -1 and !data.walkie) then
 				chat.AddText(newFreqColor, theFreq, newChanColor, theChan, newColor, string.format(self:GetFormat(), name, text))
 			else
 				chat.AddText(newChanColor, theChan, newColor, string.format(self:GetFormat(), name, text))
@@ -730,6 +754,7 @@ function PLUGIN:OverwriteClasses()
 			
 			local transmitLong = false
 			local transmitWalkie = false
+			local broadcasting = false
 			local item
 			
 			-- Callsign handling
@@ -756,6 +781,7 @@ function PLUGIN:OverwriteClasses()
 						item = v
 						transmitLong = (v.uniqueID == "longrange")
 						transmitWalkie = (v.uniqueID == "walkietalkie")
+						broadcasting = (v:GetData("broadcast",false))
 						break
 					end
 				end
@@ -763,7 +789,7 @@ function PLUGIN:OverwriteClasses()
 
 			if (item) then
 				if (!client:IsRestricted()) then
-					ix.chat.Send(client, "radio", message,nil,nil,{callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
+					ix.chat.Send(client, "radio", message,nil,nil,{broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
 					ix.chat.Send(client, "radio_eavesdrop", message,nil,nil,{quiet=item:GetData("silenced")})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
@@ -790,7 +816,7 @@ function PLUGIN:OverwriteClasses()
 		COMMAND.arguments = ix.type.text
 		
 		COMMAND.alias = {"ry"} -- NEW
-		
+
 		function COMMAND:OnRun(client, message)
 			local character = client:GetCharacter()
 			local inventory = character:GetInventory()
@@ -803,9 +829,10 @@ function PLUGIN:OverwriteClasses()
 					for k,v in pairs(current) do radios[#radios+1] = v end
 				end
 			end
-				
+			
 			local transmitLong = false
 			local transmitWalkie = false
+			local broadcasting = false
 			local item
 			
 			-- Callsign handling
@@ -832,6 +859,7 @@ function PLUGIN:OverwriteClasses()
 						item = v
 						transmitLong = (v.uniqueID == "longrange")
 						transmitWalkie = (v.uniqueID == "walkietalkie")
+						broadcasting = (v:GetData("broadcast",false))
 						break
 					end
 				end
@@ -839,7 +867,7 @@ function PLUGIN:OverwriteClasses()
 
 			if (item) then
 				if (!client:IsRestricted()) then
-					ix.chat.Send(client, "radio_yell", message,nil,nil,{callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
+					ix.chat.Send(client, "radio_yell", message,nil,nil,{broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
 					ix.chat.Send(client, "radio_eavesdrop_yell", message,nil,nil,{quiet=item:GetData("silenced")})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
@@ -863,7 +891,7 @@ function PLUGIN:OverwriteClasses()
 		COMMAND.arguments = ix.type.text
 		
 		COMMAND.alias = {"rw"} -- NEW
-		
+
 		function COMMAND:OnRun(client, message)
 			local character = client:GetCharacter()
 			local inventory = character:GetInventory()
@@ -879,6 +907,7 @@ function PLUGIN:OverwriteClasses()
 			
 			local transmitLong = false
 			local transmitWalkie = false
+			local broadcasting = false
 			local item
 			
 			-- Callsign handling
@@ -905,6 +934,7 @@ function PLUGIN:OverwriteClasses()
 						item = v
 						transmitLong = (v.uniqueID == "longrange")
 						transmitWalkie = (v.uniqueID == "walkietalkie")
+						broadcasting = (v:GetData("broadcast",false))
 						break
 					end
 				end
@@ -912,7 +942,7 @@ function PLUGIN:OverwriteClasses()
 
 			if (item) then
 				if (!client:IsRestricted()) then
-					ix.chat.Send(client, "radio_whisper", message,nil,nil,{callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
+					ix.chat.Send(client, "radio_whisper", message,nil,nil,{broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
 					ix.chat.Send(client, "radio_eavesdrop_whisper", message,nil,nil,{quiet=item:GetData("silenced")})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
@@ -1192,6 +1222,88 @@ function PLUGIN:OverwriteClasses()
 		end
 
 		ix.command.Add("SetCallsign", COMMAND)
+	end
+	
+	--
+	
+	do
+		local COMMAND = {}
+		--COMMAND.adminOnly = true
+		--COMMAND.arguments = ix.type.text
+		
+		COMMAND.alias = {"rbc"}
+		
+		function COMMAND:TableLength(T)
+			local count = 0
+			for _ in pairs(T) do count = count + 1 end
+			return count
+		end
+		
+		function COMMAND:CheckLegal(chk,typ)
+			if (chk == 1 and typ == "longrange") then
+				return true
+			elseif (chk == 2) then
+				if (typ == "longrange" or typ == "handheld_radio") then
+					return true
+				end
+			elseif (chk == 3) then
+				return true
+			end
+		end
+
+		function COMMAND:OnRun(client)
+			local character = client:GetCharacter()
+			local inventory = character:GetInventory()
+			
+			local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+			local radioTypes = {"walkietalkie","longrange"}
+			for _,curtype in pairs(radioTypes) do
+				local current = inventory:GetItemsByUniqueID(curtype, true)
+				if (#current > 0) then 
+					for k,v in pairs(current) do radios[#radios+1] = v end
+				end
+			end
+			
+			if (ix.config.Get("allowBroadcast",true)) then
+			
+				local bAllowed = ix.config.Get("broadcastLevel",1)
+			
+				if (self:TableLength(radios) > 0) then
+					local found = false
+					for k,v in pairs(radios) do
+						if (v:GetData("enabled",false) and v:GetData("active",true)) then
+							-- Toggles broadcasting
+							found = true
+							if (self:CheckLegal(bAllowed,v.uniqueID) )  then
+								v:SetData("broadcast", !v:GetData("broadcast", false))
+								legal = true
+								if v:GetData("broadcast") then
+									local nowalkie = (v.uniqueID != "walkietalkie")
+									local show = string.format("You are now broadcasting over all channels%s.",nowalkie and " on "..v:GetData("frequency","100.0").." MHz" or "")
+									client:NotifyLocalized(show)
+								else
+									client:NotifyLocalized("You are no longer broadcasting over all channels.")
+								end
+								break
+							end
+						end
+					end
+					
+					if !found then
+						client:NotifyLocalized("None of your radios are currently active.")
+					elseif !legal then
+						client:NotifyLocalized("Your radio is not capable of broadcasting.")
+					end
+				else
+					client:NotifyLocalized("You do not have a radio!")
+				end
+			
+			else
+				client:NotifyLocalized("Radio broadcasting has been disabled.")
+			end
+		end
+
+		ix.command.Add("RadioBroadcast", COMMAND)
 	end
 	
 end -- For PLUGIN:OverwriteClasses()
