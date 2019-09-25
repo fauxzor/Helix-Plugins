@@ -23,6 +23,12 @@ This plugin extends the functionality of the radio implementation included in th
    The channel of your active radio can be changed using `\setChan` or by using the "Channel" command on the radio item in your inventory. Each frequency has 4 channels-- 1, 2, 3, and 4. You must be on the same channel as the speaker to receive their message, even if you are also on the same frequency. To reduce chatbox clutter, if you only have one radio enabled, you will only see the speaker's channel next to their name when you receive a radio message; if you have more than one radio enabled (and they're both not on the same frequency), you will also see their frequency, so you know which one to reply on. You should see the name of the channel corresponding to the radio you received the message on (barring special circumstances).
    
    You can rename these channels by using `\chanRename number,name` as one string separated by a comma. This will set the specified channel of your active radio to the specified name. However, it is recommended to use the "ChannelRename" command on the item in the inventory, which opens up a graphical interface to change channel names. Other people can not see the names of your channels... unless they pick up your radio! Channel names are saved per-radio and persist after being dropped.
+   
+- **Broadcasting to multiple channels at once**
+
+   By using the command `\rbc` or (`\radioBroadcast`), transmissions on your active radio will be sent to all channels on your frequency. Messages received as a broadcast do not show a channel name, but instead solely the frequency (unless you're receiving it on a walkie talkie, in which case you'll just see your channel name, since you don't have access to the walkie's "frequency"). Broadcasting radios in your inventory are marked with a blue-green pip above the status icon, and display helpful text when you hover over them to remind you that you're broadcasting.
+   
+   Three different levels of control are available in the config menu. Level 1 (default) enables broadcasting for long range radios only. Level 2 enables it for long range and regular radios, and Level 3 enables it for walkie talkies as well. There is also the option to disable broadcasting altogether.
 
 - **Distance-based radio scrambling, with modifiers for being indoors, using a long range radio, yelling, etc.**
 
