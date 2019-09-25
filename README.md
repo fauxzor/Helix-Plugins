@@ -17,7 +17,7 @@ This plugin extends the functionality of the radio implementation included in th
    In the past, radio scripts have not made a strong distinction between radio chatter and "regular" chatter. Even if someone is standing within earshot of you when they transmit, you will often receive their message as a radio transmission in your chatbox, as will they, even though they were heard far more clearly in the "real world" than on the radio. This sort of feedback encourages players to use the radio even when they don't have to, which clutters up the chatbox and in my opinion subverts the entire point of a roleplaying script, which is to provide an elegant "local chat" solution. 
    
 <p align="center">
-  <img width="225" height="225" src="https://i.imgur.com/OM5LgAO.png">
+  <img width="449" height="225" src="https://i.imgur.com/QQBalQC.png">
 </p>
    
    With "Extended Radio", your radio transmissions and any that you receive within earshot of the speaker will be displayed as local chat and shown in the regular chatbox. Any radio transmissions you receive from someone out of earshot will be displayed as a radio message, with all the associated aesthetics & sound effects.
