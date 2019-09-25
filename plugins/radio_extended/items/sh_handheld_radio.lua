@@ -55,13 +55,15 @@ ITEM.functions.Frequency = {
 	OnRun = function(itemTable)
 	
 		local character = itemTable.player:GetCharacter()
-		local radios = character:GetInventory():GetItemsByUniqueID("handheld_radio", true)
-		local longranges = character:GetInventory():GetItemsByUniqueID("longrange", true)
-		local bBreak = false
+		local inventory = character:GetInventory()
 		
-		-- Puts the long ranges in with regular radios
-		if (#longranges > 0) then
-			for k,v in pairs(longranges) do radios[#radios+1] = v end
+		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+		local radioTypes = {"walkietalkie","longrange"}
+		for _,curtype in pairs(radioTypes) do
+			local current = inventory:GetItemsByUniqueID(curtype, true)
+			if (#current > 0) then 
+				for k,v in pairs(current) do radios[#radios+1] = v end
+			end
 		end
 		
 		if !itemTable:GetData("enabled") then 
