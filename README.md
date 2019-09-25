@@ -20,7 +20,7 @@ This plugin extends the functionality of the radio implementation included in th
 
 - **Customizable radio channels subordinate to each frequency**
 
-   The channel of your active radio can be changed using `\setChan` or by using the "Channel" command on the radio item in your inventory. Each frequency has 4 channels-- 1, 2, 3, and 4. You must be on the same channel as the speaker to receive their message, even if you are also on the same frequency. To reduce chatbox clutter, if you only have one radio enabled, you will only see the speaker's channel next to their name when you receive a radio message; if you have more than one radio enabled (and they're both not on the same frequency), you will also see their frequency, so you know which one to reply on.
+   The channel of your active radio can be changed using `\setChan` or by using the "Channel" command on the radio item in your inventory. Each frequency has 4 channels-- 1, 2, 3, and 4. You must be on the same channel as the speaker to receive their message, even if you are also on the same frequency. To reduce chatbox clutter, if you only have one radio enabled, you will only see the speaker's channel next to their name when you receive a radio message; if you have more than one radio enabled (and they're both not on the same frequency), you will also see their frequency, so you know which one to reply on. You should see the name of the channel corresponding to the radio you received the message on (barring special circumstances).
    
    You can rename these channels by using `\chanRename number,name` as one string separated by a comma. This will set the specified channel of your active radio to the specified name. However, it is recommended to use the "ChannelRename" command on the item in the inventory, which opens up a graphical interface to change channel names. Other people can not see the names of your channels... unless they pick up your radio! Channel names are saved per-radio and persist after being dropped.
 
@@ -52,6 +52,12 @@ This plugin extends the functionality of the radio implementation included in th
    Callsigns should be persistent across a restart, although I have had mixed success with this. Two options are available in the config menu to set a "default" callsign: the speaker's character name (as usual), or an "anonymous" option (i.e. "Somebody/Someone/A voice radios in"). If a character has a callsign set, this will always show as their "radio name" even if transmissions are anonymized. A character's callsign can be set with `\setCallsign` and can include spaces and such. If no argument is provided, their callsign is reset to the default config setting.
 
 - **Long range radio item (`"sh_longrange"`), with different chat color & less scrambling**
+- **Walkie talkie item (`"sh_walkietalkie"`), with different functionality & more scrambling**
+
+   Walkie talkies operate on the same radio frequencies as everyone else, but with one caveat: you can not directly choose the frequency. Instead, running the "Scan" command on the walkie talkie item in your inventory will search your surroundings for other players using a walkie talkie and gives you a chance to "lock on" to their frequency (and channel, for convenience). If a "strong" signal is not found, a random frequency is assigned to the walkie talkie. You are guaranteed to find a frequency if you are within speaking range of another person with an enabled walkie talkie. Scanning will always change your frequency; that is, you will not stay locked on to the same frequency if you scan twice in a row, even if the person on that frequency is right next to you.
+   
+   The maximum range of the walkie talkie is controllable via the config menu and scales to the current maximum range of the radio. I called it a "multiplier" but I suppose it's more like a "divisor". The maximum range of the walkie talkie will always be less than that of radio chat & their transmissions will always be more garbled, whether you are sending or receiving.
+
 - **Radio sound effects/tones for transmitting and receiving messages, modified by distance**
 - **"Silence" command for the radio, which disables your own radio tones**
 
