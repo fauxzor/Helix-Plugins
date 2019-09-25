@@ -41,10 +41,16 @@ This plugin extends the functionality of the radio implementation included in th
    * Long range radios increase the maximum distance & therefore reduce distance-based scrambling
    * There is a small element of randomness-- transmissions could sometimes be better or worse than you'd expect
    
-   Although somewhat cludgy I decided to stick with the "multiplier" system to adjust the maximum radio range. Source units are not very intuitive to most people and different map geometries make them less meaningful than the chat range, which all radio ranges are based off of. You can adjust the maximum radio range by adjusting the radio range multiplier from 1x the chat range to 135x the chat range (approximately the maximum Source map size and then some). Of note is that the "max range" is just the range which results in 100% scrambling; due to the nature of the scrambling code, and in what qualifies as a "readable" message, this may *not* be the actual "maximum range" to hear something useful. I have found that a scrambling fraction of over 50% is pretty much useless, and have adjusted accordingly, but it's something to keep in mind when adjusting them yourself. Play around and find setttings that work for you!
+   Although somewhat cludgy I decided to stick with the "multiplier" system to adjust the maximum radio range. Source units are not very intuitive to most people and different map geometries make them less meaningful than the chat range, which all radio ranges are based off of. You can adjust the maximum radio range by adjusting the radio range multiplier from 1x the chat range to 135x the chat range (approximately the maximum Source map size and then some). Of note is that the "max range" is just the range which results in 100% scrambling; due to the nature of the scrambling code, and in what qualifies as a "readable" message, this may *not* be the actual "maximum range" to hear something useful. I have found that a scrambling fraction of over 50% is pretty much useless, and have adjusted accordingly, but it's something to keep in mind when adjusting them yourself.
+   
+   In addition to the maximum range, you can also adjust the distance-based model governing the garbling in the config. Each setting corresponds to a different model. Below is a plot of each of the models available, along with some commentary for each. Play around and find settings that work for you!
    
 <p align="center">
   <img width="848" height="314" src="https://github.com/fauxzor/Helix-Plugins/blob/master/decay_models_1.PNG">
+</p>
+
+<p align="center">
+  <img width="577" height="170" src="https://github.com/fauxzor/Helix-Plugins/blob/master/fracs_1.PNG">
 </p>
 
 - **New "radio yell" and "radio whisper" commands, with different chat color & more/less scrambling**
