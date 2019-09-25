@@ -24,6 +24,11 @@ if (CLIENT) then
 			surface.SetDrawColor(255, 255/4, 110/2, 200)
 			surface.DrawRect(w - 14, h - 11, 9, 2)
 		end
+		
+		if (item:GetData("broadcast") and item:GetData("enabled")) then
+			surface.SetDrawColor(255/4, 255, 110*2, 200)
+			surface.DrawRect(w - 15, h - 20, 9, 2)
+		end
 	end
 end
 
@@ -40,7 +45,8 @@ function ITEM:GetDescription()
 		ret = ret .. " \nRadio tones are currently silenced."
 	end
 	if self:GetData("active") then
-		ret = ret .. " \nYou are transmitting on this radio."
+		local brdcastStr = ", and broadcasting on all channels!"
+		ret = string.format("%s \nYou are transmitting on this radio%s",ret, self:GetData("broadcast") and brdcastStr or ".")
 	end
 	
 	return ret
@@ -49,7 +55,67 @@ end
 function ITEM.postHooks.drop(item, status)
 	item:SetData("enabled", false)
 	item:SetData("active",false)
+	item:SetData("broadcast",false)
 end
+
+ITEM.functions.Broadcast = {
+	OnRun = function(itemTable)
+	
+		local character = itemTable.player:GetCharacter()
+		local inventory = character:GetInventory()
+		
+		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+		local radioTypes = {"walkietalkie","longrange"}
+		for _,curtype in pairs(radioTypes) do
+			local current = inventory:GetItemsByUniqueID(curtype, true)
+			if (#current > 0) then 
+				for k,v in pairs(current) do radios[#radios+1] = v end
+			end
+		end
+		
+		if !itemTable:GetData("enabled") then 
+			itemTable:SetData("enabled", true)
+		end
+			
+		if (!itemTable:GetData("active")) then -- if the current radio is on...
+			-- first deactivates all other active radios
+			for k, v in ipairs(radios) do
+				if (v != itemTable and v:GetData("enabled", false) and v:GetData("active",false)) then
+					v:SetData("active",false)
+					v:SetData("broadcast",false)
+					--bCanToggle = false
+					--break
+				end
+			end
+			
+			itemTable:SetData("active",true)
+			character:SetData("frequency",itemTable:GetData("frequency","100.0"))
+			character:SetData("channel",itemTable:GetData("channel","1"))
+		end
+		
+		-- Toggles broadcasting
+		itemTable:SetData("broadcast", !itemTable:GetData("broadcast", false))
+		
+		if itemTable:GetData("broadcast") then
+			itemTable.player:NotifyLocalized("You are now broadcasting over all channels on "..itemTable:GetData("frequency","100.0").." MHz.")
+		else
+			itemTable.player:NotifyLocalized("You are no longer broadcasting over all channels.")
+		end
+		
+		return false
+	end,
+	
+	OnCanRun = function(itemTable)
+		local bAllowed = ix.config.Get("broadcastLevel",1)
+		if !ix.config.Get("allowBroadcast",true) then
+			return false
+		elseif bAllowed >= 1 then
+			return true
+		else
+			return false
+		end
+	end
+}
 
 ITEM.functions.Frequency = {
 	OnRun = function(itemTable)
@@ -133,6 +199,7 @@ ITEM.functions.Channel = {
 		return false
 	end
 }
+
 
 ITEM.functions.ChannelRename = {
 	
@@ -240,6 +307,7 @@ ITEM.functions.Toggle = {
 			else
 				character:SetData("frequency","")
 				itemTable:SetData("active",false)
+				itemTable:SetData("broadcast",false)
 			end
 			
 			itemTable.player:EmitSound("buttons/lever7.wav", 50, math.random(170, 180), 0.25)
@@ -264,7 +332,6 @@ ITEM.functions.Activate = {
 				for k,v in pairs(current) do radios[#radios+1] = v end
 			end
 		end
-		local bCanToggle = true
 		
 		if (itemTable:GetData("enabled",false)) then -- if the current radio is on...
 			-- first deactivates all other active radios
