@@ -94,6 +94,15 @@ ix.config.Add("radioWhisperSmall", true, "Whether to use smaller font sizes for 
 	category = "Extended Radio"
 })
 
+ix.config.Add("radioDecayModel", 3, "The model used to calculate how scrambled radio messages become over distance.\n\n"..
+	"(1) Quadratic (x^2)\nGood close range, bad past medium range\n\n"..
+	"(2) Logarithmic (x^(1/3) Log10[2]/Log10[2/x])\nWorst overall, but smoothest/most predictable decay\n\n"..
+	"(3) Hybrid (0.5(x + x^8))\nWorse close range than quadratic, better long range than logarithmic\n\n"..
+	"(4) Lowest (0.5(x^2 + x^9))\nBest overall, with approximately quadratic decay at long range", nil, {
+	data = {min = 1, max = 4},
+	category = "Extended Radio"
+})
+
 -- Max map size in Source is 32768 units, and chat range is default 280 units, so max possible multiplier should be about 120
 -- However, radio is garbled as the square of the distance, so the maximum "effective range" is actually (much) less than that
 -- To say nothing of modifiers, and different map sizes/configurations...
@@ -123,8 +132,10 @@ ix.config.Add("enableCallsigns", true, "Whether or not callsigns are allowed.", 
 	category = "Extended Radio"
 })
 
-ix.config.Add("defaultCallsign", 1, "1 = Character name, 2 = Anonymous (Somebody, Someone, etc).", nil, {
-	data = {min = 1, max = 2},
+ix.config.Add("anonymousRadioNames", false, "If true, players' names will not show up when using the radio, and"..
+	"instead will be replaced with 'Someone', 'Somebody', 'A voice', or 'A person'. "..
+	"Callsigns become the only way to uniquely identify anyone on the radio.", nil, {
+	--data = {min = 1, max = 2},
 	category = "Extended Radio"
 })
 
@@ -133,7 +144,8 @@ ix.config.Add("allowBroadcast", true, "1 = Character name, 2 = Anonymous (Somebo
 	category = "Extended Radio"
 })
 
-ix.config.Add("broadcastLevel", 1, "What types of radios can broadcast on all channels\n1 = Long range only\n2 = Long ranges & regular radios\n3 = All radios & walkies.", nil, {
+ix.config.Add("broadcastLevel", 1, "What types of radios can broadcast on all channels\n"..
+	"1 = Long range only\n2 = Long ranges & regular radios\n3 = All radios & walkies.", nil, {
 	data = {min = 1, max = 3},
 	category = "Extended Radio"
 })
@@ -321,8 +333,7 @@ function PLUGIN:OverwriteClasses()
 					for k,v in pairs(current) do radios[#radios+1] = v end
 				end
 			end
-			local bHasRadio = false
-			
+			local bHasRadio = false	
 
 			-- Character-level frequency/channel handling
 			local testA = speaker:GetCharacter():GetData("frequency") == character:GetData("frequency")
@@ -337,7 +348,31 @@ function PLUGIN:OverwriteClasses()
 					local testD = speaker:GetCharacter():GetData("channel") == v:GetData("channel")
 					local test2 = (testC and testD)
 					
-					if ( v:GetData("enabled", false) and (test1 or test2) ) then
+					-- Broadcast handling
+					local test3 = false
+					if (testA or testC) then
+						-- Get speaker active radio
+						local spcharacter = speaker:GetCharacter()
+						local spinventory = spcharacter:GetInventory()
+						
+						local spradios = spinventory:GetItemsByUniqueID("handheld_radio", true)
+						--local radioTypes = {"walkietalkie","longrange"}
+						for _,curtype in pairs(radioTypes) do
+							local current = spinventory:GetItemsByUniqueID(curtype)
+							if (#current > 0) then 
+								for foo,bar in pairs(current) do spradios[#spradios+1] = bar end
+							end
+						end
+						
+						for _,b in pairs(spradios) do
+							if b:GetData("enabled") and b:GetData("active") and b:GetData("broadcast") then
+								test3 = true
+							end
+						end
+					end
+					--
+					
+					if ( v:GetData("enabled", false) and (test1 or test2 or test3) ) then
 						bHasRadio = true
 						break
 					end
@@ -411,20 +446,33 @@ function PLUGIN:OverwriteClasses()
 				maxRadioRange = maxRadioRange / ix.config.Get("walkieMult",4)
 			end
 			local normDist = math.min(1, (dist / maxRadioRange))
+
+			
+			-- Random garbling setup
+			local maxScaleGarbleFrac = 60 -- Maximum percent garbling at maximum radio distance
+			local maxRandomGarble = 5 -- Random garbling will change garbling by at most maxRandomGarble*normDist
+			
+			-- Distance model selection
+			local quadratic = normDist^2 -- Quadratic, inverse square law
+			local log2cal = 0.3 -- Approx. Log10(2)
+			
+			local logarithmic = normDist^(1/3)*( log2cal / (math.log10(maxRadioRange / dist) + log2cal) ) -- Logarithmic, signal strength
+			local hybrid = 0.5*(normDist + normDist^8) -- Quadratic/logarithmic hybrid, worse at close range but better at long range
+			local lowest = 0.5*(normDist^2 + normDist^9) -- Better than hybrid model at all ranges with similar long range decay to quadratic
+	
+			local models = {quadratic,logarithmic,hybrid,lowest}
+			local distModel = models[ix.config.Get("radioDecayModel",3)]
 			
 			-- Random garbling
-			local maxScaleGarbleFrac = 60 -- Maximum percent garbling at maximum radio distance
-			local maxRandomGarble = 10
-			
 			local sign = {-1,1}
-			local rGarble = sign[math.random(#sign)] * ( maxRandomGarble*math.random()) * (0.5*( normDist + normDist^8 ))
+			local rGarble = sign[math.random(#sign)] * ( maxRandomGarble*math.random() * distModel)
 			--print(rGarble)
 			if (normDist == 1) then
 				rGarble = math.random(1,100-maxScaleGarbleFrac)
 			end
 			
 			--frac = 100*math.min(1, normDist^2) -- Inverse square law
-			frac = math.max(0, rGarble + (maxScaleGarbleFrac * (0.5*( normDist + normDist^8 )) )) -- Me own function
+			frac = math.max(0, rGarble + (maxScaleGarbleFrac * distModel )) -- Me own function
 			
 			-- Indoor handling
 			local minPenalty = 3
@@ -761,7 +809,7 @@ function PLUGIN:OverwriteClasses()
 			local call
 			local defCall
 			local names = {"Somebody", "Someone", "A voice", "A person"}
-			if (ix.config.Get("defaultCallsign") == 1) then
+			if (!ix.config.Get("anonymousRadioNames")) then
 				defCall = client:Name()
 			else
 				defCall = names[math.random(#names)]
@@ -839,7 +887,7 @@ function PLUGIN:OverwriteClasses()
 			local call
 			local defCall
 			local names = {"Somebody", "Someone", "A voice", "A person"}
-			if (ix.config.Get("defaultCallsign") == 1) then
+			if (!ix.config.Get("anonymousRadioNames")) then
 				defCall = client:Name()
 			else
 				defCall = names[math.random(#names)]
@@ -914,7 +962,7 @@ function PLUGIN:OverwriteClasses()
 			local call
 			local defCall
 			local names = {"Somebody", "Someone", "A voice", "A person"}
-			if (ix.config.Get("defaultCallsign") == 1) then
+			if (!ix.config.Get("anonymousRadioNames")) then
 				defCall = client:Name()
 			else
 				defCall = names[math.random(#names)]
