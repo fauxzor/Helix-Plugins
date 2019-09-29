@@ -11,7 +11,49 @@ If you have any questions about my plugins, or would just like to get in touch w
   <img width="550" height="256" src="https://github.com/fauxzor/Helix-Plugins/blob/master/extended_radio_short.png">
 </p>
 
-This plugin extends the functionality of the radio implementation included in the default Helix HL2RP schema. Features include:
+This plugin extends the functionality of the radio implementation included in the default Helix HL2RP schema. In summary, this plugin makes the following changes & additions to the default HL2RP radio implementation:
+
+*New features*
+* Local radio messages -- sent by yourself or someone in earshot -- are displayed as IC chat
+* Dynamic display of a speaker's frequency and/or channel next to received messages
+* Radio messages are scrambled over long distances & by various other modifiers (such as being indoors)
+* 4 radio channels for each frequency, with both a GUI and chat commands to quickly & easily customize them
+* Multiple radios can be on and listened to at once (although only one can be "Active" and transmitting)
+* Toggleable "Broadcast" command for radio items, to transmit on all channels at once
+* Toggleable "Listen" command for radio items, to listen to all channels at once (disable transmitting)
+* Customizable radio callsigns, which display instead of the speaker's name when receiving radio messages
+* Radio tone sound effects for sending & receiving radio messages, toggleable for each radio item
+
+*New chat classes*
+* `radio_whisper (\rw)`which displays in a darker & smaller font size if used with the Radio Chatbox plugin; reduces your readability over the radio, but only makes you audible to those within whispering range around you
+* `radio_yell (\ry)`, which displays in a brighter & larger font size if used with the Radio Chatbox plugin; makes your message easier to understand, but also easier to eavesdrop on
+
+*New items*
+* `sh_walkietalkie`, a short-range radio designed to communicate with other walkie-talkies; does not have the ability to directly set the frequency, only to "Scan" for other walkie-talkie users in the area and tune in to their signal
+
+* `sh_handheld_radio`, a re-write of the original `handheld_radio` item from the HL2RP schema to include new commands such as "Broadcast", "Channel", and "Listen"; the "default" radio item, with full frequency control
+
+* `sh_longrange`, a duplicate of the handheld radio with a longer maximum range and different chat color; by default, this is the only radio type on which you can "Broadcast" on all channels, to further differentiate each type of radio
+
+*New chat commands (with examples)*
+* `\setFreq (100.0)`, changes the frequency of your active radio
+  
+  Frequencies can be any number between `100.1` and `999.9` but must be given in that *exact* format, with three digits, a decimal, and one more digit. Be specific!
+
+* `\setChan (1)`, changes the channel of your active radio
+* `\chanRename (1,TACTICAL)`, renames the specified channel of your active radio to the specified name
+
+   Entries must be separated by a comma, and although the name can be anything, you are limited to 16 characters (for reasons).
+   
+* `\rbc` or `\radioBroadcast`, *toggles* broadcasting on all channels for your active radio
+* `setCallsign (Character1 War Pig)`, changes the callsign of the specified player to the specified callsign
+
+   No special handling is needed for spaces in the callsign; anything after the character's name will be the callsign verbatim. In the example, Character1's callsign was set to *War Pig*. To clear a player's callsign and reset it to the default, simply enter the character's name without a callsign.
+
+---
+
+### Features
+
 - **Separation of non-local radio chat from local radio chat**
 
    In the past, radio scripts have not made a strong distinction between radio chatter and "regular" chatter. Even if someone is standing within earshot of you when they transmit, you will often receive their message as a radio transmission in your chatbox, as will they, even though they were heard far more clearly in the "real world" than on the radio. This sort of feedback encourages players to use the radio even when they don't have to, which clutters up the chatbox and in my opinion subverts the entire point of a roleplaying script, which is to provide an elegant "local chat" solution. 
