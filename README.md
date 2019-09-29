@@ -13,7 +13,7 @@ If you have any questions about my plugins, or would just like to get in touch w
 
 ### Summary
 
-This plugin extends the functionality of the radio implementation included in the default Helix HL2RP schema. In summary, this plugin makes the following changes & additions to the default HL2RP radio implementation:
+This plugin extends the functionality of the radio implementation included in the default Helix HL2RP schema. In summary, this plugin makes the following changes & additions:
 
 *New features*
 * Local radio messages -- sent by yourself or someone in earshot -- are displayed as IC chat
