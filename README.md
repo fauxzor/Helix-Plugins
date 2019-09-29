@@ -28,9 +28,8 @@ This plugin extends the functionality of the radio implementation included in th
    
    You can rename these channels by using `\chanRename number,name` as one string separated by a comma. This will set the specified channel of your active radio to the specified name. However, it is recommended to use the "ChannelRename" command on the item in the inventory, which opens up a graphical interface to change channel names. Other people can not see the names of your channels... unless they pick up your radio! Channel names are saved per-radio and persist after being dropped.
    
-   <p align="left">
-  <img width="404" height="152" src="https://https://i.imgur.com/bCVnukA.png">
-</p><p align="right">
+<p align="center">
+  <img width="404" height="117" src="https://i.imgur.com/bCVnukA.png">
   <img width="116" height="152" src="https://i.imgur.com/SeQ4KhK.png">
 </p>
    
