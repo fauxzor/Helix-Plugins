@@ -37,6 +37,10 @@ This plugin extends the functionality of the radio implementation included in th
 
    By using the command `\rbc` or (`\radioBroadcast`), you will toggle sending transmissions on your active radio to all channels on your frequency. This can also be controlled by running the "Broadcast" command on the item in your inventory. Again, this is a *toggled* command, so remember to stop broadcasting once you're done! Messages received as a broadcast do not show a channel name, but instead solely the frequency (unless you're receiving it on a walkie talkie, in which case you'll just see your channel name, since you don't have access to the walkie's "frequency"). Broadcasting radios in your inventory are marked with a blue-green pip above the status icon, and display helpful text when you hover over them to remind you that you're broadcasting.
    
+<p align="center">
+  <img width="382" height="159" src="https://i.imgur.com/zx2QDlw.png">
+</p>
+   
    Three different levels of control are available in the config menu. Level 1 (default) enables broadcasting for long range radios only. Level 2 enables it for long range and regular radios, and Level 3 enables it for walkie talkies as well. There is also the option to disable broadcasting altogether.
    
    You can also listen to all of the channels on a frequency by using the "Listen" command on the radio item. This will display an orange pip to the left of the status icon. You cannot listen and transmit on your active radio at the same time, unless you are broadcasting; this is to prevent people from just "listening" all of the time.
