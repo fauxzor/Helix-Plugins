@@ -17,7 +17,7 @@ This plugin extends the functionality of the radio implementation included in th
 
 *New features*
 * Local radio messages -- sent by yourself or someone in earshot -- are displayed as IC chat
-* Dynamic display of a speaker's frequency and/or channel next to received messages
+* Dynamic display of a speaker's frequency and/or channel next to out-of-earshot radio messages
 * Radio messages are scrambled over long distances & by various other modifiers (such as being indoors)
 * 4 radio channels for each frequency, with both a GUI and chat commands to quickly & easily customize them
 * Multiple radios can be on and listened to at once (although only one can be "Active" and transmitting)
