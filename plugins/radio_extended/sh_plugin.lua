@@ -24,50 +24,107 @@ if (CLIENT) then
 		ix.command.Send("SetChan", ch)
 	end
 	
-	netstream.Hook("Channel", function(item)
-		Derma_Query("Choose your channel", "Channel selection",
-		"CH1", function()
-			setTheChannel("1")
-		end, 
-		"CH2", function() 
-			setTheChannel("2")
-		end, 
-		"CH3", function()
-			setTheChannel("3")
-		end,
-		"CH4", function()
-			setTheChannel("4")
-		end)
-	end)
-	
 	-- Channel renaming
 	local function setTheName(ch,nm)
 		ix.command.Send("ChanRename", ch..","..nm)
 	end
+	
+	netstream.Hook("Channel", function(names)
+	
+		local dispNames = {1,2,3,4}
+		for k=1,4 do
+			if names[k] != "CH"..k then
+				dispNames[k] = "("..k..") "..names[k]
+			else
+				dispNames[k] = "CH"..k
+			end
+		end
 		
-	netstream.Hook("ChannelRename", function(names)
-		Derma_Query("Choose channel to rename", "Channel renaming",
-		names[1], function()
-			Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[1], function(text)
-				setTheName("1",text)
-			end)
+		local quer = Derma_Query("Left click to choose your channel\nRight click to rename the channel", "Channel selection",
+		dispNames[1], function()
+			setTheChannel("1")
 		end, 
-		names[2], function()
-			Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[2], function(text)
-				setTheName("2",text)
-			end)
+		dispNames[2], function() 
+			setTheChannel("2")
 		end, 
-		names[3], function()
-			Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[3], function(text)
-				setTheName("3",text)
+		dispNames[3], function()
+			setTheChannel("3")
+		end,
+		dispNames[4], function()
+			setTheChannel("4")
+		end)
+
+		-- Overwriting functionality
+		local ch1panel = quer:GetChildren()[6]:GetChildren()[1]
+		function ch1panel:DoRightClick()
+			Derma_StringRequest("Channel Name", "What would you like the new name to be?\nEnter a space to reset channel name to default", names[1], function(text)
+				if text == " " then 
+					setTheName("1","CH1")
+				else
+					setTheName("1",text)
+				end
+				quer:Close()
 			end)
-		end, 
-		names[4], function()
-			Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[4], function(text)
-				setTheName("4",text)
+		end
+		local ch2panel = quer:GetChildren()[6]:GetChildren()[2]
+		function ch2panel:DoRightClick()
+			Derma_StringRequest("Channel Name", "What would you like the new name to be?\nEnter a space to reset channel name to default", names[2], function(text)
+				if text == " " then 
+					setTheName("2","CH2")
+				else
+					setTheName("2",text)
+				end
+				quer:Close()
 			end)
-		end) 
+		end
+		local ch3panel = quer:GetChildren()[6]:GetChildren()[3]
+		function ch3panel:DoRightClick()
+			Derma_StringRequest("Channel Name", "What would you like the new name to be?\nEnter a space to reset channel name to default", names[3], function(text)
+				if text == " " then 
+					setTheName("3","CH3")
+				else
+					setTheName("3",text)
+				end
+				quer:Close()
+			end)
+		end
+		local ch4panel = quer:GetChildren()[6]:GetChildren()[4]
+		function ch4panel:DoRightClick()
+			Derma_StringRequest("Channel Name", "What would you like the new name to be?\nEnter a space to reset channel name to default", names[4], function(text)
+				if text == " " then 
+					setTheName("4","CH4")
+				else
+					setTheName("4",text)
+				end
+				quer:Close()
+			end)
+		end
+		--:GetText())
 	end)
+	
+	-- netstream.Hook("ChannelRename", function(names)
+		-- Derma_Query("Choose channel to rename", "Channel renaming",
+		-- names[1], function()
+			-- Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[1], function(text)
+				-- setTheName("1",text)
+			-- end)
+		-- end, 
+		-- names[2], function()
+			-- Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[2], function(text)
+				-- setTheName("2",text)
+			-- end)
+		-- end, 
+		-- names[3], function()
+			-- Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[3], function(text)
+				-- setTheName("3",text)
+			-- end)
+		-- end, 
+		-- names[4], function()
+			-- Derma_StringRequest("Channel Name", "What would you like the new name to be?", names[4], function(text)
+				-- setTheName("4",text)
+			-- end)
+		-- end) 
+	-- end)
 	
 	-- Frequency handling
 	netstream.Hook("Frequency", function(oldFrequency)
@@ -139,7 +196,7 @@ ix.config.Add("anonymousRadioNames", false, "If true, players' names will not sh
 	category = "Extended Radio"
 })
 
-ix.config.Add("allowBroadcast", true, "1 = Character name, 2 = Anonymous (Somebody, Someone, etc).", nil, {
+ix.config.Add("allowBroadcast", true, "Whether or not broadcasting on all channels is allowed for any radio.", nil, {
 	--data = {min = 1, max = 2},
 	category = "Extended Radio"
 })
@@ -338,19 +395,37 @@ function PLUGIN:OverwriteClasses()
 			-- Character-level frequency/channel handling
 			local testA = speaker:GetCharacter():GetData("frequency") == character:GetData("frequency")
 			local testB = speaker:GetCharacter():GetData("channel") == character:GetData("channel")
+			if character:GetData("scanning",false) then
+			--	print("Scanning true")
+				testB = true
+			end
+
 			local test1 = (testA and testB)
+			--print("Test 1 is",test1," for ",listener)
 			
-			if (listener:GetPos():Distance(speaker:GetPos()) > self:GetRange()) then
+			if test1 and speaker != listener then -- Don't even do all these checks
+				bHasRadio = true
+			elseif (listener:GetPos():Distance(speaker:GetPos()) > self:GetRange()) then
 				for k, v in pairs(radios) do
 					
 					-- Item-level frequency/channel handling
 					local testC = speaker:GetCharacter():GetData("frequency") == v:GetData("frequency")
-					local testD = speaker:GetCharacter():GetData("channel") == v:GetData("channel")
+					local testD = (speaker:GetCharacter():GetData("channel") == v:GetData("channel"))
 					local test2 = (testC and testD)
+					--print("test2 is ",test2," for ",listener)
 					
 					-- Broadcast handling
-					local test3 = false
-					if (testA or testC) then
+					local test3 = (testA and character:GetData("scanning",false))
+					if !test3 then
+						test3 =(testC and character:GetData("scanning",false) and v:GetData("scanning",false))
+					end
+					--print("test3 is ",test3," for ",listener)
+					if ( v:GetData("enabled", false) and (test1 or test2 or test3) ) then
+						--print(listener, " has radio")
+						bHasRadio = true
+						break
+					else
+						--print("Scanning check failed")
 						-- Get speaker active radio
 						local spcharacter = speaker:GetCharacter()
 						local spinventory = spcharacter:GetInventory()
@@ -366,20 +441,23 @@ function PLUGIN:OverwriteClasses()
 						
 						for _,b in pairs(spradios) do
 							if b:GetData("enabled") and b:GetData("active") and b:GetData("broadcast") then
-								test3 = true
+								--print("Broadcasting true")
+								bHasRadio = true
+								break
 							end
 						end
 					end
 					--
 					
-					if ( v:GetData("enabled", false) and (test1 or test2 or test3) ) then
-						bHasRadio = true
-						break
-					end
+					-- if ( v:GetData("enabled", false) and (test1 or test2 or test3) ) then
+						-- print("Has the radio")
+						-- bHasRadio = true
+						-- break
+					-- end
 				end
 			end
 			
-			if (bHasRadio and (speaker != listener)) then 
+			if (bHasRadio and (speaker != listener)) then
 				radioSilence(listener, (1 - self:GetMult()) * listener:GetPos():Distance(speaker:GetPos()), speaker:GetCharacter():GetData("frequency"))
 			end
 			
@@ -835,7 +913,8 @@ function PLUGIN:OverwriteClasses()
 				end
 			end
 
-			if (item) then
+			-- You can't listen to your active radio and transmit on it at the same time, unless you are broadcasting on that same frequency
+			if ( (item) and !item:GetData("scanning",false) ) or ( (item) and item:GetData("scanning",false) and item:GetData("broadcast",false) ) then
 				if (!client:IsRestricted()) then
 					ix.chat.Send(client, "radio", message,nil,nil,{broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
 					ix.chat.Send(client, "radio_eavesdrop", message,nil,nil,{quiet=item:GetData("silenced")})
@@ -844,6 +923,8 @@ function PLUGIN:OverwriteClasses()
 				else
 					return "@notNow"
 				end
+			elseif (item) and item:GetData("scanning",false) then
+				client:Notify("You cannot transmit on a radio you are listening to!")
 			elseif (#radios > 0 and enabl and (!client:GetCharacter():GetData("frequency") or client:GetCharacter():GetData("frequency") == "")) then
 				client:Notify("You do not have an active radio.")
 			elseif (#radios > 0 and !enabl) then
@@ -913,7 +994,7 @@ function PLUGIN:OverwriteClasses()
 				end
 			end
 
-			if (item) then
+			if ( (item) and !item:GetData("scanning",false) ) or ( (item) and item:GetData("scanning",false) and item:GetData("broadcast",false) ) then
 				if (!client:IsRestricted()) then
 					ix.chat.Send(client, "radio_yell", message,nil,nil,{broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
 					ix.chat.Send(client, "radio_eavesdrop_yell", message,nil,nil,{quiet=item:GetData("silenced")})
@@ -922,6 +1003,8 @@ function PLUGIN:OverwriteClasses()
 				else
 					return "@notNow"
 				end
+			elseif (item) and item:GetData("scanning",false) then
+				client:Notify("You cannot transmit on a radio you are listening to!")
 			elseif (#radios > 0 and enabl and (!client:GetCharacter():GetData("frequency") or client:GetCharacter():GetData("frequency") == "")) then
 				client:Notify("You do not have an active radio.")
 			elseif (#radios > 0 and !enabl) then
@@ -988,7 +1071,7 @@ function PLUGIN:OverwriteClasses()
 				end
 			end
 
-			if (item) then
+			if ( (item) and !item:GetData("scanning",false) ) or ( (item) and item:GetData("scanning",false) and item:GetData("broadcast",false) ) then
 				if (!client:IsRestricted()) then
 					ix.chat.Send(client, "radio_whisper", message,nil,nil,{broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
 					ix.chat.Send(client, "radio_eavesdrop_whisper", message,nil,nil,{quiet=item:GetData("silenced")})
@@ -997,6 +1080,8 @@ function PLUGIN:OverwriteClasses()
 				else
 					return "@notNow"
 				end
+			elseif (item) and item:GetData("scanning",false) then
+				client:Notify("You cannot transmit on a radio you are listening to!")
 			elseif (#radios > 0 and enabl and (!client:GetCharacter():GetData("frequency") or client:GetCharacter():GetData("frequency") == "")) then
 				client:Notify("You do not have an active radio.")
 			elseif (#radios > 0 and !enabl) then
