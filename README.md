@@ -1,7 +1,7 @@
 # Helix-Plugins
 A repository for plugins I have created to be used with Helix, a roleplaying script for Garry's Mod. I hope you enjoy my work! Thank you to the Helix developers (and the devs that came before them) for laying the framework for me to build upon. I would not have gotten anywhere starting from scratch. Please excuse my spaghetti code.
 
-If you have any questions about my plugins, or would just like to get in touch with me, [you can find me on Steam here.](https://steamcommunity.com/id/faux55)
+If you have any questions about my plugins, or would just like to get in touch with me, you can find me on Discord `@fauxzor#8368` or [you can add me on Steam here.](https://steamcommunity.com/id/faux55)
 
 ---
 
