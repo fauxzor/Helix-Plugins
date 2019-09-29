@@ -19,7 +19,7 @@ This plugin extends the functionality of the radio implementation included in th
 * Local radio messages -- sent by yourself or someone in earshot -- are displayed as IC chat
 * Dynamic display of a speaker's frequency and/or channel next to out-of-earshot radio messages
 * Radio messages are scrambled over long distances & by various other modifiers (such as being indoors)
-* 4 radio channels for each frequency, with both a GUI and chat commands to quickly & easily customize them
+* 4 radio channels for each frequency, with both a GUI and chat commands to easily customize them
 * Multiple radios can be on and listened to at once (although only one can be "Active" and transmitting)
 * Toggleable "Broadcast" command for radio items, to transmit on all channels at once
 * Toggleable "Listen" command for radio items, to listen to all channels at once (disable transmitting)
@@ -48,7 +48,7 @@ This plugin extends the functionality of the radio implementation included in th
    Entries must be separated by a comma, and although the name can be anything, you are limited to 16 characters (for reasons).
    
 * `\rbc` or `\radioBroadcast`, *toggles* broadcasting on all channels for your active radio
-* `setCallsign (Character1 War Pig)`, changes the callsign of the specified player to the specified callsign
+* `\setCallsign (Character1 War Pig)`, changes the callsign of the specified player to the specified callsign
 
    No special handling is needed for spaces in the callsign; anything after the character's name will be the callsign verbatim. In the example, Character1's callsign was set to *War Pig*. To clear a player's callsign and reset it to the default, simply enter the character's name without a callsign.
 
