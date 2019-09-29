@@ -28,6 +28,12 @@ This plugin extends the functionality of the radio implementation included in th
    
    You can rename these channels by using `\chanRename number,name` as one string separated by a comma. This will set the specified channel of your active radio to the specified name. However, it is recommended to use the "ChannelRename" command on the item in the inventory, which opens up a graphical interface to change channel names. Other people can not see the names of your channels... unless they pick up your radio! Channel names are saved per-radio and persist after being dropped.
    
+   <p align="left">
+  <img width="404" height="152" src="https://https://i.imgur.com/bCVnukA.png">
+</p><p align="right">
+  <img width="116" height="152" src="https://i.imgur.com/SeQ4KhK.png">
+</p>
+   
 - **Broadcasting to multiple channels at once**
 
    By using the command `\rbc` or (`\radioBroadcast`), you will toggle sending transmissions on your active radio to all channels on your frequency. This can also be controlled by running the "Broadcast" command on the item in your inventory. Again, this is a *toggled* command, so remember to stop broadcasting once you're done! Messages received as a broadcast do not show a channel name, but instead solely the frequency (unless you're receiving it on a walkie talkie, in which case you'll just see your channel name, since you don't have access to the walkie's "frequency"). Broadcasting radios in your inventory are marked with a blue-green pip above the status icon, and display helpful text when you hover over them to remind you that you're broadcasting.
