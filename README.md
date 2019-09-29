@@ -11,6 +11,8 @@ If you have any questions about my plugins, or would just like to get in touch w
   <img width="550" height="256" src="https://github.com/fauxzor/Helix-Plugins/blob/master/extended_radio_short.png">
 </p>
 
+### Summary
+
 This plugin extends the functionality of the radio implementation included in the default Helix HL2RP schema. In summary, this plugin makes the following changes & additions to the default HL2RP radio implementation:
 
 *New features*
