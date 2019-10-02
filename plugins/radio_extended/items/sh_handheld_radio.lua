@@ -6,6 +6,8 @@ ITEM.cost = 50
 ITEM.classes = {CLASS_EMP, CLASS_EOW}
 ITEM.flag = "v"
 
+local radioTypes = {"longrange","walkietalkie","duplexradio"}
+
 -- Inventory drawing
 if (CLIENT) then
 	function ITEM:PaintOver(item, w, h)
@@ -73,7 +75,7 @@ ITEM.functions.Broadcast = {
 		local inventory = character:GetInventory()
 		
 		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		local radioTypes = {"walkietalkie","longrange"}
+		--
 		for _,curtype in pairs(radioTypes) do
 			local current = inventory:GetItemsByUniqueID(curtype, true)
 			if (#current > 0) then 
@@ -133,7 +135,7 @@ ITEM.functions.Frequency = {
 		local inventory = character:GetInventory()
 		
 		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		local radioTypes = {"walkietalkie","longrange"}
+		--
 		for _,curtype in pairs(radioTypes) do
 			local current = inventory:GetItemsByUniqueID(curtype, true)
 			if (#current > 0) then 
@@ -176,7 +178,7 @@ ITEM.functions.Channel = {
 		local inventory = character:GetInventory()
 		
 		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		local radioTypes = {"walkietalkie","longrange"}
+		--
 		for _,curtype in pairs(radioTypes) do
 			local current = inventory:GetItemsByUniqueID(curtype, true)
 			if (#current > 0) then 
@@ -226,7 +228,7 @@ ITEM.functions.Channel = {
 		-- local inventory = character:GetInventory()
 		
 		-- local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		-- local radioTypes = {"walkietalkie","longrange"}
+		-- --
 		-- for _,curtype in pairs(radioTypes) do
 			-- local current = inventory:GetItemsByUniqueID(curtype, true)
 			-- if (#current > 0) then 
@@ -286,7 +288,7 @@ ITEM.functions.Listen = {
 		local inventory = character:GetInventory()
 		
 		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		local radioTypes = {"walkietalkie","longrange"}
+		--
 		for _,curtype in pairs(radioTypes) do
 			local current = inventory:GetItemsByUniqueID(curtype, true)
 			if (#current > 0) then 
@@ -335,7 +337,7 @@ ITEM.functions.Toggle = {
 		local inventory = character:GetInventory()
 		
 		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		local radioTypes = {"walkietalkie","longrange"}
+		--
 		for _,curtype in pairs(radioTypes) do
 			local current = inventory:GetItemsByUniqueID(curtype, true)
 			if (#current > 0) then 
@@ -403,7 +405,7 @@ ITEM.functions.Activate = {
 		local inventory = character:GetInventory()
 		
 		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		local radioTypes = {"walkietalkie","longrange"}
+		--
 		for _,curtype in pairs(radioTypes) do
 			local current = inventory:GetItemsByUniqueID(curtype, true)
 			if (#current > 0) then 
@@ -428,6 +430,7 @@ ITEM.functions.Activate = {
 				character:SetData("channel",itemTable:GetData("channel","1"))
 				itemTable.player:NotifyLocalized("You activated the radio.")
 			else
+				itemTable:SetData("broadcast",false)
 				character:SetData("frequency","")
 				itemTable.player:NotifyLocalized("You deactivated the radio.")
 			end
