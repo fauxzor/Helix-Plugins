@@ -7,7 +7,7 @@ PLUGIN.description = "A standalone radio plugin with extended functionality over
 
 -- Anonymous names, if radio callsigns are anonymous
 local radioanon = {"Somebody", "Someone", "A voice", "A person"}
-local radioTypes = {"walkietalkie","longrange","duplexradio"}
+local radioTypes = {"walkietalkie","longrange","duplexradio","duplexwalkie"}
 
 -- Serverside voice handling
 -- If you care about applying the "rules" of the radio to voice chat, enable this
@@ -484,7 +484,8 @@ function PLUGIN:OverwriteClasses()
 		end
 
 
-		function CLASS:CanHear(speaker, listener)
+		function CLASS:CanHear(speaker, listener, data)
+			--PrintTable(data)
 			--local chatRange = ix.config.Get("chatRange",280)
 			local maxRadioRange = ix.config.Get("radioRangeMult") * ix.config.Get("chatRange") 
 			local character = listener:GetCharacter()
@@ -509,20 +510,21 @@ function PLUGIN:OverwriteClasses()
 			local duplex = false
 			local spTrue = false
 			local lisTrue = false
-			if inventory:HasItem("duplexradio") and spinventory:HasItem("duplexradio") then
+			if inventory:HasItem("duplexradio") and (spinventory:HasItem("duplexradio") or spinventory:HasItem("duplexwalkie")) then
 				duplex = true
-				--print("Duplexing")
-				local speakEnts = ents.FindInSphere(speaker:GetPos(), maxRadioRange)
-				--local spTrue, lisTrue = false,false
-				for k,v in pairs(speakEnts) do
-					if v:GetClass() == "ix_radiorepeater" and v:GetEnabled() then 
-						if tonumber(v:GetInputFreq()) == tonumber(spcharacter:GetData("frequency","100.0")) then
-							spTrue = true
-							--print("spTrue is true")
-							break
-						end
-					end
-				end
+				spTrue = data.repeater
+				-- --print("Duplexing")
+				-- local speakEnts = ents.FindInSphere(speaker:GetPos(), maxRadioRange)
+				-- --local spTrue, lisTrue = false,false
+				-- for k,v in pairs(speakEnts) do
+					-- if v:GetClass() == "ix_radiorepeater" and v:GetEnabled() then 
+						-- if tonumber(v:GetInputFreq()) == tonumber(spcharacter:GetData("frequency","100.0")) then
+							-- spTrue = true
+							-- --print("spTrue is true")
+							-- break
+						-- end
+					-- end
+				-- end
 			end
 			--
 
@@ -552,7 +554,7 @@ function PLUGIN:OverwriteClasses()
 							local testD = spcharacter:GetData("channel") == v:GetData("channel")
 							
 							-- More duplex stuffs
-							if v.uniqueID == "duplexradio" and spTrue then
+							if v.duplex and spTrue then
 								local listenEnts = ents.FindInSphere(listener:GetPos(), ix.config.Get("repeaterMult")*maxRadioRange)
 								for __,entity in pairs(listenEnts) do
 									if entity:GetClass() == "ix_radiorepeater" and entity:GetEnabled() then 
@@ -607,7 +609,7 @@ function PLUGIN:OverwriteClasses()
 								
 								for _,b in pairs(spradios) do
 									if b:GetData("enabled") and b:GetData("active") and b:GetData("broadcast") then
-										if b.uniqueID == "duplexradio" and spTrue and (testA or testC) then
+										if b.duplex and spTrue and (testA or testC) then
 											--print("spTrue is ",spTrue)
 											bHasRadio = true
 											break
@@ -1134,8 +1136,8 @@ function PLUGIN:OverwriteClasses()
 					enabl = true
 					if (v:GetData("active")) then
 						item = v
-						transmitLong = (v.uniqueID == "longrange")
-						transmitWalkie = (v.uniqueID == "walkietalkie")
+						transmitLong = v.longrange
+						transmitWalkie = v.walkietalkie
 						broadcasting = (v:GetData("broadcast",false))
 						break
 					end
@@ -1145,8 +1147,15 @@ function PLUGIN:OverwriteClasses()
 			-- DUPLEX RADIO STUFF
 			local bRepeater = false
 			--local duplex = inventory:HasItem("duplexradio")
-			if item and item.uniqueID == "duplexradio" then
-				local localEnts = ents.FindInSphere(client:GetPos(), ix.config.Get("radioRangeMult")*ix.config.Get("chatRange",280))--:GetRange()/2)
+			if item and item.duplex then
+			
+				local mult = 1
+				if item.walkietalkie then
+					mult = ix.config.Get("walkieMult")
+				end
+				
+				local searchRange = mult * ix.config.Get("radioRangeMult")*ix.config.Get("chatRange",280)
+				local localEnts = ents.FindInSphere(client:GetPos(), searchRange)--:GetRange()/2)
 				for k,v in pairs(localEnts) do
 					if v:GetClass() == "ix_radiorepeater" and v:GetEnabled() then 
 						--print(item:GetData("frequency","100.0"))
@@ -1232,8 +1241,8 @@ function PLUGIN:OverwriteClasses()
 					enabl = true
 					if (v:GetData("active")) then
 						item = v
-						transmitLong = (v.uniqueID == "longrange")
-						transmitWalkie = (v.uniqueID == "walkietalkie")
+						transmitLong = v.longrange
+						transmitWalkie = v.walkietalkie
 						broadcasting = (v:GetData("broadcast",false))
 						break
 					end
@@ -1242,9 +1251,15 @@ function PLUGIN:OverwriteClasses()
 			
 			-- DUPLEX RADIO STUFF
 			local bRepeater = false
-			--local duplex = inventory:HasItem("duplexradio")
-			if item and item.uniqueID == "duplexradio" then
-				local localEnts = ents.FindInSphere(client:GetPos(), ix.config.Get("radioRangeMult")*ix.config.Get("chatRange",280))--:GetRange()/2)
+			if item and item.duplex then
+			
+				local mult = 1
+				if item.walkietalkie then
+					mult = ix.config.Get("walkieMult")
+				end
+				
+				local searchRange = mult * ix.config.Get("radioRangeMult")*ix.config.Get("chatRange",280)
+				local localEnts = ents.FindInSphere(client:GetPos(), searchRange)--:GetRange()/2)
 				for k,v in pairs(localEnts) do
 					if v:GetClass() == "ix_radiorepeater" and v:GetEnabled() then 
 						--print(item:GetData("frequency","100.0"))
@@ -1326,8 +1341,8 @@ function PLUGIN:OverwriteClasses()
 					enabl = true
 					if (v:GetData("active")) then
 						item = v
-						transmitLong = (v.uniqueID == "longrange")
-						transmitWalkie = (v.uniqueID == "walkietalkie")
+						transmitLong = v.longrange
+						transmitWalkie = v.walkietalkie
 						broadcasting = (v:GetData("broadcast",false))
 						break
 					end
@@ -1337,8 +1352,15 @@ function PLUGIN:OverwriteClasses()
 			-- DUPLEX RADIO STUFF
 			local bRepeater = false
 			--local duplex = inventory:HasItem("duplexradio")
-			if item and item.uniqueID == "duplexradio" then
-				local localEnts = ents.FindInSphere(client:GetPos(), ix.config.Get("radioRangeMult")*ix.config.Get("chatRange",280))--:GetRange()/2)
+			if item and item.duplex then
+			
+				local mult = 1
+				if item.walkietalkie then
+					mult = ix.config.Get("walkieMult")
+				end
+				
+				local searchRange = mult * ix.config.Get("radioRangeMult")*ix.config.Get("chatRange",280)
+				local localEnts = ents.FindInSphere(client:GetPos(), searchRange)--:GetRange()/2)
 				for k,v in pairs(localEnts) do
 					if v:GetClass() == "ix_radiorepeater" and v:GetEnabled() then 
 						--print(item:GetData("frequency","100.0"))
@@ -1503,13 +1525,17 @@ function PLUGIN:OverwriteClasses()
 			
 			local itemTable
 			local numEnabled = 0
+			local numEnabledDuplex = 0
 			if (self:TableLength(radios) < 1) then
 				client:Notify("You do not have a radio!")
 			else
 				for k, v in ipairs(radios) do
-					if (v:GetData("enabled", false) and v.uniqueID == "duplexradio") then
+					if (v:GetData("enabled", false)) then
 						itemTable = v
 						numEnabled = numEnabled + 1
+						if v.duplex then
+							numEnabledDuplex = numEnabledDuplex + 1
+						end
 						if (v:GetData("active")) then
 							--print("Activated?")
 							active = 1
@@ -1518,7 +1544,7 @@ function PLUGIN:OverwriteClasses()
 					end
 				end
 
-				if (active == 1) then
+				if (active == 1 and itemTable.duplex) then
 					if string.find(listenfrequency, "^%d%d%d%.%d$") then
 						character:SetData("frequency", itemTable:GetData("frequency"))
 						character:SetData("channel", itemTable:GetData("channel","1"))
@@ -1526,14 +1552,15 @@ function PLUGIN:OverwriteClasses()
 						
 						client:Notify(string.format("You have set your receiving frequency to %s MHz.", listenfrequency))
 					end
-				elseif (itemTable and (numEnabled == 1) and (active == 0)) then
-					if string.find(listenfrequency, "^%d%d%d%.%d$") then
+				elseif (itemTable and itemTable.duplex and (numEnabledDuplex == 1)) then
+					if string.find(listenfrequency, "^%d%d%d%.%d$") then				
+						itemTable:SetData("listenfrequency", listenfrequency)
+						client:Notify(string.format("You have set your receiving frequency to %s MHz.", listenfrequency))
+					end
+					if (numEnabled == 1 and numEnabledDuplex == 1) then
 						itemTable:SetData("active", true)
 						character:SetData("frequency", itemTable:GetData("frequency"))
-						character:SetData("channel", itemTable:GetData("channel","1"))						
-						itemTable:SetData("listenfrequency", listenfrequency)
-
-						client:Notify(string.format("You have set your receiving frequency to %s MHz.", listenfrequency))
+						character:SetData("channel", itemTable:GetData("channel","1"))	
 					end
 				elseif (numEnabled > 1) then
 					client:Notify("Activate one of your radios to set the frequency.")
@@ -1749,7 +1776,21 @@ function PLUGIN:OverwriteClasses()
 			return count
 		end
 		
-		function COMMAND:CheckLegal(chk,typ)
+		function COMMAND:CheckLegal(chk,item)
+			--local bAllowed = ix.config.Get("broadcastLevel",1)
+			local itemType = item.uniqueID
+			if !chk then
+				return false
+			elseif chk >= 1 and item.longrange then
+				return true
+			elseif chk >= 2 and (itemType == "duplexradio" or itemType == "handheld_radio") then
+				return true
+			elseif chk == 3 and item.walkietalkie then
+				return true
+			else
+				return false
+			end
+			
 			if (chk == 1 and typ == "longrange") then
 				return true
 			elseif (chk == 2) then
@@ -1784,11 +1825,11 @@ function PLUGIN:OverwriteClasses()
 						if (v:GetData("enabled",false) and v:GetData("active",true)) then
 							-- Toggles broadcasting
 							found = true
-							if (self:CheckLegal(bAllowed,v.uniqueID) )  then
+							if (self:CheckLegal(bAllowed, v) )  then
 								v:SetData("broadcast", !v:GetData("broadcast", false))
 								legal = true
 								if v:GetData("broadcast") then
-									local nowalkie = (v.uniqueID != "walkietalkie")
+									local nowalkie = !v.walkietalkie
 									local show = string.format("You are now broadcasting over all channels%s.",nowalkie and " on "..v:GetData("frequency","100.0").." MHz" or "")
 									client:NotifyLocalized(show)
 								else
@@ -1863,15 +1904,16 @@ function PLUGIN:OverwriteClasses()
 			if (self:TableLength(radios) > 0) then
 				local found = false
 				for k,v in pairs(radios) do
-					if (v:GetData("enabled",false) and v:GetData("active",true)) then
+					if (v:GetData("enabled",false) and v:GetData("active",false)) then
 						-- Toggles broadcasting
 						found = true
 						--if (self:CheckLegal(bAllowed,v.uniqueID) )  then
 						v:SetData("scanning", !v:GetData("scanning", false))
 						--legal = true
 						if v:GetData("scanning",false) then
-							local nowalkie = (v.uniqueID != "walkietalkie")
-							local show = string.format("You are now listening to all channels%s.",nowalkie and " on "..v:GetData("frequency","100.0").." MHz" or "")
+							local nowalkie = !v.walkietalkie
+							local preShow = string.format(" on %s MHz", v.duplex and v:GetData("listenfrequency","100.0") or v:GetData("frequency","100.0"))
+							local show = string.format("You are now listening to all channels%s.",nowalkie and preShow or "")
 							client:NotifyLocalized(show)
 						else
 							client:NotifyLocalized("You are no longer listening to all channels.")
