@@ -115,7 +115,7 @@ This plugin extends the functionality of the radio implementation included in th
    * Long range radios increase the maximum distance & therefore reduce distance-based scrambling
    * There is a small element of randomness-- transmissions could sometimes be better or worse than you'd expect
    
-   Although somewhat cludgy I decided to stick with the "multiplier" system to adjust the maximum radio range. Source units are not very intuitive to most people and different map geometries make them less meaningful than the chat range, which all radio ranges are based off of. You can adjust the maximum radio range by adjusting the radio range multiplier from 1x the chat range to 135x the chat range (approximately the maximum Source map size and then some). Of note is that the "max range" is just the range which results in 100% scrambling; due to the nature of the scrambling code, and in what qualifies as a "readable" message, this may *not* be the actual "maximum range" to hear something useful. I have found that a scrambling fraction of over 50% is pretty much useless, and have adjusted accordingly, but it's something to keep in mind when adjusting them yourself.
+   Although somewhat cludgy I decided to stick with the "multiplier" system to adjust the maximum radio range. Source units are not very intuitive to most people and different map geometries make them less meaningful than the chat range, which all radio ranges are based off of. You can adjust the maximum radio range by adjusting the radio range multiplier from 1x the chat range to 135x the chat range (approximately the maximum Source map size and then some). Of note is that the "max range" is just the range which results in 100% scrambling; due to the nature of the scrambling code, and in what qualifies as a "readable" message, this may *not* be the actual "maximum range" to hear something useful.
    
    In addition to the maximum range, you can also adjust the distance-based model governing the garbling in the config. Each setting corresponds to a different model. Below is a plot of each of the models available, along with some commentary for each. Play around and find settings that work for you!
    
@@ -129,7 +129,7 @@ This plugin extends the functionality of the radio implementation included in th
 
 - **New "radio yell" and "radio whisper" commands, with different chat color & more/less scrambling**
 
-   These can be used with the shorthand `\ry` and `\rw`\. Note that whispering does *not* reduce the volume of your radio tones, to any would-be eavesdroppers, so remember to silence your radio if you want to transmit incognito!
+   These can be used with the shorthand `\ry` and `\rw`. Note that whispering does *not* reduce the volume of your radio tones, to any would-be eavesdroppers, so remember to silence your radio if you want to transmit incognito!
 
 - **The ability to set one radio as "Active" & to listen to multiple different radios at a time**
 
@@ -140,13 +140,23 @@ This plugin extends the functionality of the radio implementation included in th
 - **Radio callsigns, which are used instead of the character's name for radio chat and shown in the "You" menu**
 
    Callsigns should be persistent across a restart, although I have had mixed success with this. Two options are available in the config menu to set a "default" callsign: the speaker's character name (as usual), or an "anonymous" option (i.e. "Somebody/Someone/A voice radios in"). If a character has a callsign set, this will always show as their "radio name" even if transmissions are anonymized. A character's callsign can be set with `\setCallsign` and can include spaces and such. If no argument is provided, their callsign is reset to the default config setting.
-
+  
 - **Long range radio item (`"sh_longrange"`), with different chat color & less scrambling**
 - **Walkie talkie item (`"sh_walkietalkie"`), with different functionality & more scrambling**
 
    Walkie talkies operate on the same radio frequencies as everyone else, but with one caveat: you can not directly choose the frequency. Instead, running the "Scan" command on the walkie talkie item in your inventory will search your surroundings for other players using a walkie talkie and gives you a chance to "lock on" to their frequency (and channel, for convenience). If a "strong" signal is not found, a random frequency is assigned to the walkie talkie. You are guaranteed to find a frequency if you are within speaking range of another person with an enabled walkie talkie. Scanning will always change your frequency; that is, you will not stay locked on to the same frequency if you scan twice in a row, even if the person on that frequency is right next to you.
    
    The maximum range of the walkie talkie is controllable via the config menu and scales to the current maximum range of the radio. I called it a "multiplier" but I suppose it's more like a "divisor". The maximum range of the walkie talkie will always be less than that of radio chat & their transmissions will always be more garbled, whether you are sending or receiving.
+
+- **Radio repeaters & duplex radios, which only function when in range of a repeater*
+
+   Normally, radio communications are peer-to-peer; you communicate directly with other people, transmitting and listening on the same frequency. This is the familiar "simplex" mode, which has the downside of degrading heavily at long ranges, as the signal strength corresponds to the strength of your own radio. Radio repeaters create the possibility of "duplex" transmissions. By receiving a (potentially weak) signal on one frequency, and outputting it on a different (more powerful) frequency, radio messages can be "relayed" long distances-- at a cost. If you leave the range of the repeater, your messages won't get through at all.
+
+<p align="center">
+  <img width="600" height="324" src="https://i.imgur.com/wqCLouJ.png">
+</p>
+
+   These kinds of repeaters are only compatible with duplex radios, which cannot transmit and receive on the same frequency at once. Duplex radios function almost identically to their regular counterparts but with an additional "receiving" or "listening" frequency that must be tuned to the correct output frequency of a radio repeater. Duplex walkie talkies have their "Scan" function replaced with a "Synchronize" function to automatically set both the transmitting and receiving frequencies to those of a nearby radio repeater.
 
 - **Radio sound effects/tones for transmitting and receiving messages, modified by distance**
 - **"Silence" command for the radio, which disables your own radio tones**
