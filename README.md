@@ -25,20 +25,28 @@ This plugin extends the functionality of the radio implementation included in th
 * Toggleable "Listen" command for radio items, to listen to all channels at once (disable transmitting)
 * Customizable radio callsigns, which display instead of the speaker's name when receiving radio messages
 * Radio tone sound effects for sending & receiving radio messages, toggleable for each radio item
+* Radio repeater entity used with duplex radios; takes input on one frequency and outputs on another
+* Duplex radios, which have increased range when in range of a repeater but are useless otherwise
+* Centralized base radio item; new custom radio items can now be created with just a few lines of code
 
 *New chat classes*
 * `radio_whisper (\rw)`which displays in a darker & smaller font size if used with the Radio Chatbox plugin; reduces your readability over the radio, but only makes you audible to those within whispering range around you
 * `radio_yell (\ry)`, which displays in a brighter & larger font size if used with the Radio Chatbox plugin; makes your message easier to understand, but also easier to eavesdrop on
 
-*New items*
+*New items/entities*
 * `sh_walkietalkie`, a short-range radio designed to communicate with other walkie-talkies; does not have the ability to directly set the frequency, only to "Scan" for other walkie-talkie users in the area and tune in to their signal
 
 * `sh_handheld_radio`, a re-write of the original `handheld_radio` item from the HL2RP schema to include new commands such as "Broadcast", "Channel", and "Listen"; the "default" radio item, with full frequency control
 
 * `sh_longrange`, a duplicate of the handheld radio with a longer maximum range and different chat color; by default, this is the only radio type on which you can "Broadcast" on all channels, to further differentiate each type of radio
 
+* `sh_duplexradio` and `sh_duplexwalkie`, duplex versions of the handheld radio & walkie talkie
+
+* `ix_radiorepeater`, the radio repeater entity required for duplex radios to function, spawnable from the "Helix" category in the "Entities" tab; interacting with the repeater allows you to change its input & output frequencies
+
 *New chat commands (with examples)*
 * `\setFreq (100.0)`, changes the frequency of your active radio
+* `\setListenFreq (900.0)`, changes the receiving frequency of your active duplex radio
   
   Frequencies can be any number between `100.1` and `999.9` but must be given in that *exact* format, with three digits, a decimal, and one more digit. Be specific!
 
@@ -48,9 +56,12 @@ This plugin extends the functionality of the radio implementation included in th
    Entries must be separated by a comma, and although the name can be anything, you are limited to 16 characters (for reasons).
    
 * `\rbc` or `\radioBroadcast`, *toggles* broadcasting on all channels for your active radio
-* `\setCallsign (Character1 War Pig)`, changes the callsign of the specified player to the specified callsign
+* `\rls` or `\radioListen`, *toggles* listening to all channels for your active radio
+* `\setCallsign (Character1 War Pig)`, changes the callsign of the specified player to the specified callsign; admin only
 
    No special handling is needed for spaces in the callsign; anything after the character's name will be the callsign verbatim. In the example, Character1's callsign was set to *War Pig*. To clear a player's callsign and reset it to the default, simply enter the character's name without a callsign.
+   
+* `\clearRadioRepeaters`, clears all radio repeater entities on the map permanently
 
 ---
 
