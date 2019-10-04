@@ -309,16 +309,16 @@ ix.config.Add("radioSounds", true, "Toggles radio sending/receiving beeps & boop
 
 function playSound(target,voiceprefix,sending,distance,radioType) -- Fun new function to more easily play radio send/receive sounds
 
-	local maxRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult", 100)
-	local distance = distance or 0
-	local normDist = math.min(1, (distance/maxRange))
-	local distFrac = (0.5*( normDist + normDist^8 ))
-	if (!ix.config.Get("garbleRadio",true)) then
-		distFrac = 0
-	end
+	-- local maxRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult", 100)
+	-- local distance = distance or 0
+	-- local normDist = math.min(1, (distance/maxRange))
+	-- local distFrac = (0.5*( normDist + normDist^8 ))
+	-- if (!ix.config.Get("garbleRadio",true)) then
+		-- distFrac = 0
+	-- end
 	
 	local range = math.random(ix.config.Get("chatRange",280)-10, ix.config.Get("chatRange",280)+10)
-	local pitchmod = math.random(110 - 50*distFrac, 120 - 50*distFrac) -- Pitch shifts the receive beep with increasing distance
+	local pitchmod = math.random(110 - 50*distance, 120 - 50*distance) -- Pitch shifts the receive beep with increasing distance
 	local pitchmodAlt = math.random(50,50)
 	local pitchmodAlt2 = math.random(120,120)
 	local whichnoise = math.random(2,3)
@@ -339,18 +339,18 @@ function playSound(target,voiceprefix,sending,distance,radioType) -- Fun new fun
 				timer.Simple(0.7, function() target:EmitSound(voiceprefix.."1"..".wav", range, pitchmodAlt2,volume) end)
 				timer.Simple(0.77, function() target:EmitSound(voiceprefix.."1"..".wav", range, pitchmodAlt2,volume) end)
 			-- Walkie talkie sounds
-			elseif radioType == "walkietalkie" then
-				target:EmitSound("extendedradio/start11.wav",range,100 - 20*distFrac, 0.5*volume)
+			elseif radioType == "walkietalkie" or radioType == "duplexwalkie" then
+				target:EmitSound("extendedradio/start11.wav",range,100 - 20*distance, 0.5*volume)
 				timer.Simple(0.05, function() target:EmitSound("extendedradio/walkiestart1.wav", range, 110, volume) end)
 				timer.Simple(0.7, function() target:EmitSound("extendedradio/end11.wav", range, math.random(115,120),volume) end)
 			end
 		else
 			if radioType == "duplexradio" or radioType == "handheld_radio" then
 				target:EmitSound(voiceprefix..whichnoise..".wav", range, pitchmod,0.2)
-				timer.Simple(0.3,function() target:EmitSound("extendedradio/walkieend1.wav",range,110 - 20*distFrac, 0.3) end)
-			elseif radioType == "walkietalkie" then
-				timer.Simple(0.3,function() target:EmitSound("extendedradio/walkieend1.wav",range,110 - 20*distFrac, 0.3) end)
-				timer.Simple(0.1,function() target:EmitSound("extendedradio/end22.wav",range,110 - 20*distFrac, 0.2) end)
+				timer.Simple(0.3,function() target:EmitSound("extendedradio/walkieend1.wav",range,110 - 20*distance, 0.3) end)
+			elseif radioType == "walkietalkie" or radioType == "duplexwalkie" then
+				timer.Simple(0.3,function() target:EmitSound("extendedradio/walkieend1.wav",range,110 - 20*distance, 0.3) end)
+				timer.Simple(0.1,function() target:EmitSound("extendedradio/end22.wav",range,110 - 20*distance, 0.2) end)
 			end
 		end
 	end
@@ -393,7 +393,6 @@ function endChatter(listener, distance, radioType)
 			if (!listener:IsValid() or !listener:Alive()) then
 				return false
 			end
-			
 			playSound(listener,prefix,false,distFrac,radioType)
 		end)
 	end
@@ -418,26 +417,28 @@ function isOutdoors(target)
 end
 
 -- Checks a player's inventory to see if their active radio is set to silent, and plays/doesn't play the appropriate sounds
-function radioSilence(target, dist, frequency)
-	local character = target:GetCharacter()
-	local inventory = character:GetInventory()
+-- function radioSilence(target, dist, frequency)
+	-- local character = target:GetCharacter()
+	-- local inventory = character:GetInventory()
 	
-	local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-	--local radioTypes = {"walkietalkie","longrange"}
-	for _,curtype in pairs(radioTypes) do
-		local current = inventory:GetItemsByUniqueID(curtype, true)
-		if (#current > 0) then 
-			for k,v in pairs(current) do radios[#radios+1] = v end
-		end
-	end
-
-	for k, v in pairs(radios) do
-		if (v:GetData("enabled", false) and !v:GetData("silenced",false) and (v:GetData("frequency") == frequency)) then
-			endChatter(target,dist,v.uniqueID)
-			break -- Play sound once
-		end
-	end
-end
+	-- local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+	-- --local radioTypes = {"walkietalkie","longrange"}
+	-- for _,curtype in pairs(radioTypes) do
+		-- local current = inventory:GetItemsByUniqueID(curtype, true)
+		-- if (#current > 0) then 
+			-- for k,v in pairs(current) do radios[#radios+1] = v end
+		-- end
+	-- end
+	
+	-- for k, v in pairs(radios) do
+		-- if v:GetData("enabled", false) and !v:GetData("silenced",false) then
+			-- if (v:GetData("frequency") == frequency or v.duplex) then
+				-- endChatter(target,dist,v.uniqueID)
+				-- break -- Play sound once
+			-- end
+		-- end
+	-- end
+-- end
 
 function PLUGIN:OverwriteClasses()
 	-- 
@@ -493,12 +494,20 @@ function PLUGIN:OverwriteClasses()
 			local spinventory = spcharacter:GetInventory()
 			local inventory = character:GetInventory()
 			
+			local togetherDistance = listener:GetPos():Distance(speaker:GetPos())
+			
 			local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+			local listenerActiveRadio
 			--local radioTypes = {"walkietalkie","longrange"}
 			for _,curtype in pairs(radioTypes) do
 				local current = inventory:GetItemsByUniqueID(curtype)
 				if (#current > 0) then 
-					for k,v in pairs(current) do radios[#radios+1] = v end
+					for k,v in pairs(current) do
+						radios[#radios+1] = v
+						if v:GetData("active",false) then
+							listenerActiveRadio = v
+						end
+					end
 				end
 			end
 			local bHasRadio = false	
@@ -510,7 +519,7 @@ function PLUGIN:OverwriteClasses()
 			local duplex = false
 			local spTrue = false
 			local lisTrue = false
-			if inventory:HasItem("duplexradio") and (spinventory:HasItem("duplexradio") or spinventory:HasItem("duplexwalkie")) then
+			if (inventory:HasItem("duplexradio") or inventory:HasItem("duplexwalkie")) and data.repeater then
 				duplex = true
 				spTrue = data.repeater
 				-- --print("Duplexing")
@@ -539,7 +548,8 @@ function PLUGIN:OverwriteClasses()
 			local test1 = (testA and testB)
 			
 			--local duplex = false
-			if (listener:GetPos():Distance(speaker:GetPos()) > self:GetRange()) then
+			local radioSelect
+			if (togetherDistance > self:GetRange()) then
 				if test1 and speaker != listener then -- Don't even do all these checks
 					bHasRadio = true
 				else
@@ -574,6 +584,7 @@ function PLUGIN:OverwriteClasses()
 									if (testA and testB) then
 										bHasRadio = true
 									--	print("Broke here")
+										radioSelect = v
 										break
 									end
 								end
@@ -585,6 +596,7 @@ function PLUGIN:OverwriteClasses()
 							local test3 = false
 							
 							if !duplex and test2 then
+								radioSelect = v
 								bHasRadio = true
 								--print("Broke here1 for",listener)
 								break
@@ -592,6 +604,7 @@ function PLUGIN:OverwriteClasses()
 								test3 = true
 								bHasRadio = true
 								--print("Broke here2 for",listener)
+								radioSelect = v
 								break
 							end
 							
@@ -612,6 +625,7 @@ function PLUGIN:OverwriteClasses()
 										if b.duplex and spTrue and (testA or testC) then
 											--print("spTrue is ",spTrue)
 											bHasRadio = true
+											radioSelect = v
 											break
 										end
 									end
@@ -623,9 +637,14 @@ function PLUGIN:OverwriteClasses()
 					end
 				end
 			end
-			
-			if (bHasRadio and (speaker != listener)) then
-				radioSilence(listener, (1 - self:GetMult()) * listener:GetPos():Distance(speaker:GetPos()), spcharacter:GetData("frequency"))
+
+			if bHasRadio and (speaker != listener) then
+				if radioSelect and !radioSelect:GetData("silenced",false) then
+					endChatter(listener,togetherDistance,radioSelect.uniqueID)
+				elseif listenerActiveRadio and !listenerActiveRadio:GetData("silenced",false) then
+					endChatter(listener,togetherDistance,listenerActiveRadio.uniqueID)
+				end
+				--radioSilence(listener, (1 - self:GetMult()) * listener:GetPos():Distance(speaker:GetPos()), spcharacter:GetData("frequency"))
 			end
 			
 			--print(listener,listener:GetCharacter():GetData("channel"))
@@ -769,7 +788,7 @@ function PLUGIN:OverwriteClasses()
 			if LocalPlayer():IsLineOfSightClear(speakEnt) then -- If you can see them, you get a bonus
 				frac = losFrac * frac
 			elseif (repeater and !isOutdoors(LocalPlayer())) or (!repeater and (!isOutdoors(speaker) or !isOutdoors(LocalPlayer()))) then -- Indoors stuff
-				if repeater then print("Repter") end
+				--if repeater then print("Repter") end
 				frac = frac * (1 + (randomPenalty/100)*math.random()) -- First penalty
 				frac = numTraces(speaker,LocalPlayer(),frac,hitPenalty) -- Penalty for each trace
 				--print(frac)
@@ -1171,8 +1190,11 @@ function PLUGIN:OverwriteClasses()
 			-- You can't listen to your active radio and transmit on it at the same time, unless you are broadcasting on that same frequency
 			if ( (item) and !item:GetData("scanning",false) ) or ( (item) and item:GetData("scanning",false) and item:GetData("broadcast",false) ) then
 				if (!client:IsRestricted()) then
-					ix.chat.Send(client, "radio", message,nil,nil,{repeater = bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
-					ix.chat.Send(client, "radio_eavesdrop", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie })
+				
+					if (item.duplex and bRepeater != false) or (!item.duplex) then
+						ix.chat.Send(client, "radio", message,nil,nil,{repeater = bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
+						ix.chat.Send(client, "radio_eavesdrop", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie })
+					end
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
 				else
@@ -1274,8 +1296,11 @@ function PLUGIN:OverwriteClasses()
 
 			if ( (item) and !item:GetData("scanning",false) ) or ( (item) and item:GetData("scanning",false) and item:GetData("broadcast",false) ) then
 				if (!client:IsRestricted()) then
-					ix.chat.Send(client, "radio_yell", message,nil,nil,{repeater=bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
-					ix.chat.Send(client, "radio_eavesdrop_yell", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
+				
+					if (item.duplex and bRepeater != false) or (!item.duplex) then
+						ix.chat.Send(client, "radio_yell", message,nil,nil,{repeater=bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
+						ix.chat.Send(client, "radio_eavesdrop_yell", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
+					end
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
 				else
@@ -1375,8 +1400,11 @@ function PLUGIN:OverwriteClasses()
 
 			if ( (item) and !item:GetData("scanning",false) ) or ( (item) and item:GetData("scanning",false) and item:GetData("broadcast",false) ) then
 				if (!client:IsRestricted()) then
-					ix.chat.Send(client, "radio_whisper", message,nil,nil,{repeater=bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
-					ix.chat.Send(client, "radio_eavesdrop_whisper", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
+				
+					if (item.duplex and bRepeater != false) or (!item.duplex) then
+						ix.chat.Send(client, "radio_whisper", message,nil,nil,{repeater=bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
+						ix.chat.Send(client, "radio_eavesdrop_whisper", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
+					end
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
 				else
@@ -1791,15 +1819,15 @@ function PLUGIN:OverwriteClasses()
 				return false
 			end
 			
-			if (chk == 1 and typ == "longrange") then
-				return true
-			elseif (chk == 2) then
-				if (typ == "longrange" or typ == "handheld_radio" or typ == "duplexradio") then
-					return true
-				end
-			elseif (chk == 3) then
-				return true
-			end
+			-- if (chk == 1 and typ == "longrange") then
+				-- return true
+			-- elseif (chk == 2) then
+				-- if (typ == "longrange" or typ == "handheld_radio" or typ == "duplexradio") then
+					-- return true
+				-- end
+			-- elseif (chk == 3) then
+				-- return true
+			-- end
 		end
 
 		function COMMAND:OnRun(client)
@@ -1859,7 +1887,7 @@ function PLUGIN:OverwriteClasses()
 	
 	--
 	
-		do
+	do
 		local COMMAND = {}
 		--COMMAND.adminOnly = true
 		--COMMAND.arguments = ix.type.text
@@ -1940,6 +1968,43 @@ function PLUGIN:OverwriteClasses()
 		ix.command.Add("RadioListen", COMMAND)
 	end
 	
+	--
+	
+	do
+		local COMMAND = {}
+		COMMAND.adminOnly = true
+		--COMMAND.adminOnly = true
+		--COMMAND.arguments = ix.type.text
+		
+		--COMMAND.alias = {"rls"}
+		
+		-- function COMMAND:TableLength(T)
+			-- local count = 0
+			-- for _ in pairs(T) do count = count + 1 end
+			-- return count
+		-- end
+		
+		-- function COMMAND:CheckLegal(chk,typ)
+			-- if (chk == 1 and typ == "longrange") then
+				-- return true
+			-- elseif (chk == 2) then
+				-- if (typ == "longrange" or typ == "handheld_radio" or typ == "duplexradio") then
+					-- return true
+				-- end
+			-- elseif (chk == 3) then
+				-- return true
+			-- end
+		-- end
+
+		function COMMAND:OnRun(client)
+			for _, v in ipairs(ents.FindByClass("ix_radiorepeater")) do
+				v:Remove()
+			end
+		end
+
+		ix.command.Add("ClearRadioRepeaters", COMMAND)
+	end
+	
 end -- For PLUGIN:OverwriteClasses()
 
 	-- creates labels in the status screen
@@ -1975,4 +2040,48 @@ end
 
 function PLUGIN:InitializedPlugins() -- Should handle any lua refreshing since start-up
 	self:OverwriteClasses()
+end
+
+-- Repeater saving
+-- saving
+function PLUGIN:SaveRadioRepeaters()
+	local data = {}
+
+	for _, v in ipairs(ents.FindByClass("ix_radiorepeater")) do
+		data[#data + 1] = {v:GetPos(), v:GetAngles(), v:GetEnabled(), v:GetInputFreq(), v:GetOutputFreq()}
+	end
+
+	ix.data.Set("radioRepeaters", data)
+end
+
+function PLUGIN:SaveData()
+	self:SaveRadioRepeaters()
+end
+
+function PLUGIN:ClearRadioRepeaters()
+	local data = {}
+
+	for _, v in ipairs(ents.FindByClass("ix_radiorepeater")) do
+		data[#data + 1] = {v:GetPos(), v:GetAngles(), v:GetEnabled(), v:GetInputFreq(), v:GetOutputFreq()}
+	end
+
+	ix.data.Set("radioRepeaters", data)
+end
+
+-- loading
+function PLUGIN:LoadRadioRepeaters()
+	for _, v in ipairs(ix.data.Get("radioRepeaters") or {}) do
+		local repeater = ents.Create("ix_radiorepeater")
+
+		repeater:SetPos(v[1])
+		repeater:SetAngles(v[2])
+		repeater:Spawn()
+		repeater:SetEnabled(v[3])
+		repeater:SetOutputFreq(v[4])
+		repeater:SetOutputFreq(v[5])
+	end
+end
+
+function PLUGIN:LoadData()
+	self:LoadRadioRepeaters()
 end
