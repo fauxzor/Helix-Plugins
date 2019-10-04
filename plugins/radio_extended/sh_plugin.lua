@@ -1193,8 +1193,8 @@ function PLUGIN:OverwriteClasses()
 				
 					if (item.duplex and bRepeater != false) or (!item.duplex) then
 						ix.chat.Send(client, "radio", message,nil,nil,{repeater = bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
-						ix.chat.Send(client, "radio_eavesdrop", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie })
 					end
+						ix.chat.Send(client, "radio_eavesdrop", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie })
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
 				else
@@ -1299,8 +1299,8 @@ function PLUGIN:OverwriteClasses()
 				
 					if (item.duplex and bRepeater != false) or (!item.duplex) then
 						ix.chat.Send(client, "radio_yell", message,nil,nil,{repeater=bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
-						ix.chat.Send(client, "radio_eavesdrop_yell", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
 					end
+						ix.chat.Send(client, "radio_eavesdrop_yell", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
 				else
@@ -1403,8 +1403,8 @@ function PLUGIN:OverwriteClasses()
 				
 					if (item.duplex and bRepeater != false) or (!item.duplex) then
 						ix.chat.Send(client, "radio_whisper", message,nil,nil,{repeater=bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
-						ix.chat.Send(client, "radio_eavesdrop_whisper", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
 					end
+						ix.chat.Send(client, "radio_eavesdrop_whisper", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
 				else
@@ -1472,14 +1472,16 @@ function PLUGIN:OverwriteClasses()
 					end
 				end
 
-				if (active == 1) then
+				if itemTable.walkietalkie then
+					client:Notify("You cannot directly change the frequency of this radio.")
+				elseif (active == 1) then
 					if string.find(frequency, "^%d%d%d%.%d$") then
 						character:SetData("frequency", frequency)
 						character:SetData("channel", itemTable:GetData("channel","1"))
 						itemTable:SetData("frequency", frequency)
-						if itemTable.uniqueID == "duplexradio" then
-							itemTable:SetData("listenfrequency", "990.1") -- TESTING STUFFS
-						end
+						--if itemTable.uniqueID == "duplexradio" then
+						--	itemTable:SetData("listenfrequency", "990.1") -- TESTING STUFFS
+						--end
 
 						client:Notify(string.format("You have set your radio frequency to %s MHz.", frequency))
 					end
@@ -1572,7 +1574,9 @@ function PLUGIN:OverwriteClasses()
 					end
 				end
 
-				if (active == 1 and itemTable.duplex) then
+				if itemTable.walkietalkie then
+					client:Notify("You cannot directly change the frequency of this radio.")
+				elseif (active == 1 and itemTable.duplex) then
 					if string.find(listenfrequency, "^%d%d%d%.%d$") then
 						character:SetData("frequency", itemTable:GetData("frequency"))
 						character:SetData("channel", itemTable:GetData("channel","1"))
