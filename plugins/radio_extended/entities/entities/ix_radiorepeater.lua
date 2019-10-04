@@ -1,6 +1,8 @@
 
 AddCSLuaFile()
 
+local PLUGIN = PLUGIN
+
 ENT.Type = "anim"
 ENT.PrintName = "Radio Repeater"
 ENT.Category = "Helix"
@@ -77,22 +79,22 @@ if (SERVER) then
 	end
 
 	function ENT:OnRemove()
-		if (IsValid(self)) then
-			self:SetParent(nil)
-		end
+		-- if (IsValid(self)) then
+			-- self:SetParent(nil)
+		-- end
 
-		if (IsValid(self.door)) then
-			self.door:Fire("unlock")
-			self.door.ixLock = nil
-		end
+		-- if (IsValid(self.door)) then
+			-- self.door:Fire("unlock")
+			-- self.door.ixLock = nil
+		-- end
 
-		if (IsValid(self.doorPartner)) then
-			self.doorPartner:Fire("unlock")
-			self.doorPartner.ixLock = nil
-		end
+		-- if (IsValid(self.doorPartner)) then
+			-- self.doorPartner:Fire("unlock")
+			-- self.doorPartner.ixLock = nil
+		-- end
 
 		if (!ix.shuttingDown) then
-			--Schema:SaveCombineLocks()
+			PLUGIN:SaveRadioRepeaters()
 		end
 		
 		self:StopSound("repeater_idle")
