@@ -27,6 +27,7 @@ This plugin extends the functionality of the radio implementation included in th
 * Radio tone sound effects for sending & receiving radio messages, toggleable for each radio item
 * Radio repeater entity used with duplex radios; takes input on one frequency and outputs on another
 * Duplex radios, which have increased range when in range of a repeater but are useless otherwise
+* Hybrid radios, which can toggle between 'simplex' and 'duplex' modes
 * Centralized base radio item; new custom radio items can now be created with just a few lines of code
 
 *New chat classes*
@@ -41,6 +42,8 @@ This plugin extends the functionality of the radio implementation included in th
 * `sh_longrange`, a duplicate of the handheld radio with a longer maximum range and different chat color; by default, this is the only radio type on which you can "Broadcast" on all channels, to further differentiate each type of radio
 
 * `sh_duplexradio` and `sh_duplexwalkie`, duplex versions of the handheld radio & walkie talkie
+
+* `sh_hybridradio` and `sh_hybridwalkie`, hybrid versions of the handheld radio & walkie talkie
 
 * `ix_radiorepeater`, the radio repeater entity required for duplex radios to function, spawnable from the "Helix" category in the "Entities" tab; interacting with the repeater allows you to change its input & output frequencies
 
@@ -156,7 +159,9 @@ This plugin extends the functionality of the radio implementation included in th
   <img width="600" height="324" src="https://i.imgur.com/wqCLouJ.png">
 </p>
 
-   These kinds of repeaters are only compatible with duplex radios, which cannot transmit and receive on the same frequency at once. Duplex radios function almost identically to their regular counterparts but with an additional "receiving" or "listening" frequency that must be tuned to the correct output frequency of a radio repeater. Duplex walkie talkies have their "Scan" function replaced with a "Synchronize" function to automatically set both the transmitting and receiving frequencies to those of a nearby radio repeater.
+   These kinds of repeaters are only compatible with duplex radios, which cannot transmit and receive on the same frequency at once. Duplex radios function almost identically to their regular counterparts but with an additional "receiving" or "listening" frequency that must be tuned to the correct output frequency of a radio repeater. Duplex walkie talkies have their "Scan" function replaced with a "Synchronize" function to automatically set both the transmitting and receiving frequencies to those of a nearby radio repeater. 
+   
+   "Hybrid" radios also exist that can swap between simplex and duplex modes. For convenience when using hybrid walkie talkies (as you must be very close to a receiver to synchronize with it and this is usually only desirable to have to do once), you do not lose your synchronized transmitting frequency when swapping modes. In other words, this frequency will always be "saved" until you synchronize with a new repeater. This is not true for any frequency you were using in simplex mode! If you "lock on" to a frequency in simplex mode, swap to duplex, and then back to simplex again, you will have lost that frequency.
 
 - **Radio sound effects/tones for transmitting and receiving messages, modified by distance**
 - **"Silence" command for the radio, which disables your own radio tones**
