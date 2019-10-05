@@ -5,8 +5,12 @@ ITEM.cost = 50
 ITEM.classes = {CLASS_EMP, CLASS_EOW}
 ITEM.flag = "v"
 
-local radioTypes = {"walkietalkie","longrange","duplexradio","duplexwalkie"}
+local radioTypes = {"walkietalkie","longrange","duplexradio","duplexwalkie","hybridradio","hybridwalkie"}
 ITEM.radiotypes = radioTypes --  Compatible radio types
+
+-- Defaults
+ITEM.duplex = false
+ITEM.walkietalkie = false
 
 -- Inventory drawing
 if (CLIENT) then
@@ -43,12 +47,15 @@ function ITEM:GetDescription()
 	local enabled = self:GetData("enabled")
 	local notWalkie = !self.walkietalkie
 	--local noWalkieEnable = enabled and notWalkie
-	local duplexTrue = self.duplex
+	local duplexTrue = self:GetData("duplex",self.duplex)
 	local displayFreq = string.format(" and %s %s MHz", duplexTrue and "receiving on" or "tuned to", duplexTrue and self:GetData("listenfrequency", "100.0") or self:GetData("frequency","100.0"))
 	local ret = string.format(self.description, notWalkie and " with a frequency tuner" or "", enabled and "on" or "off", (enabled and notWalkie) and displayFreq or "")
 	
 	if enabled then
-		if self:GetData("scanning", false) and enabled then
+		if self.hybrid then
+			ret = string.format("%s\nIt is operating in %s mode.", ret, self:GetData("duplex",self.duplex) and "duplex" or "simplex")
+		end
+		if self:GetData("scanning", false) then
 			ret = string.format("%s%s%s.",ret,"\nYou are listening to all channels", notWalkie and " on this frequency" or "")
 		end
 		local defCh = "CH"..self:GetData("channel","1")
@@ -98,6 +105,12 @@ function ITEM.postHooks.Synchronize(item, status)
 			character:SetData("frequency",transFreq)
 			itemTable:SetData("listenfrequency",receiveFreq)
 			itemTable.player:Notify("Successfully synchronized with a repeater.")
+			
+			-- Hybrid stuff
+			if itemTable.hybrid then
+				itemTable:SetData("storefrequency",transFreq)
+			end
+			
 			lockedOn = true
 			break
 			
@@ -175,12 +188,16 @@ function ITEM.postHooks.Scan(item, status)
 	
 					local chr = v:GetCharacter()
 					local inv = chr:GetInventory()
-					local walkie = inv:GetItemsByUniqueID("walkietalkie")
+					local radios = inv:GetItemsByUniqueID("walkietalkie", true)
+					local current = inv:GetItemsByUniqueID("hybridwalkie", true)
+					if (#current > 0) then 
+						for k,v in pairs(current) do radios[#radios+1] = v end
+					end
 					
-					if walkie then
-						for k,v in ipairs(walkie) do
+					if radios then
+						for _,radio in ipairs(radios) do
 							--PrintTable(v)
-							if v:GetData("active") then
+							if radio:GetData("active") and !radio:GetData("duplex", radio.duplex) then
 								local freq,chan = chr:GetData("frequency"),chr:GetData("channel") or otherFreq,"1"
 								if freq == item:GetData("frequency") then
 									freq,chan = otherFreq,"1"
@@ -189,6 +206,7 @@ function ITEM.postHooks.Scan(item, status)
 								itemTable:SetData("channel",chan)
 								character:SetData("frequency",freq)
 								character:SetData("channel",chan)
+								
 								lockedOn = true
 								if (freq == otherFreq) then 
 									itemTable.player:Notify("Locked on to a weak signal on channel 1.")
@@ -263,18 +281,39 @@ ITEM.functions.Broadcast = {
 	end,
 	
 	OnCanRun = function(itemTable)
-		local bAllowed = ix.config.Get("broadcastLevel",1)
+		local chk = ix.config.Get("broadcastLevel",1)
 		local itemType = itemTable.uniqueID
 		if !ix.config.Get("allowBroadcast",true) then
 			return false
-		elseif bAllowed >= 1 and itemTable.longrange then
+		elseif chk >= 1 and itemTable.longrange then
 			return true
-		elseif bAllowed >= 2 and (itemType == "duplexradio" or itemType == "handheld_radio") then
+		elseif chk == 3 and itemTable.walkietalkie then
 			return true
-		elseif bAllowed == 3 and itemTable.walkietalkie then
+		elseif chk >= 2 and !itemTable.walkietalkie then
 			return true
 		else
 			return false
+		end	
+	end
+}
+
+-- Hybrid radio stuff
+ITEM.functions.AdMode = { -- Sorry, ordering
+	name = "Mode",
+	OnRun = function(itemTable)
+		itemTable:SetData("duplex", !itemTable:GetData("duplex",itemTable.duplex))
+		if itemTable:GetData("duplex",itemTable.duplex) then 
+			itemTable:SetData("frequency", itemTable:GetData("storefrequency",itemTable:GetData("frequency"))) -- Resets transmitting frequency to previously synchronized one
+		end
+		itemTable.player:Notify(string.format("Your radio is now in %s.%s", itemTable:GetData("duplex",itemTable.duplex) and "duplex mode" or "simplex mode",(itemTable:GetData("storefrequency") and itemTable:GetData("duplex")) and "\nYour frequency has been restored." or ""))
+		return false
+	end,
+	
+	OnCanRun = function(itemTable)
+		if !itemTable.hybrid then
+			return false
+		else
+			return true
 		end
 		
 	end
@@ -316,9 +355,9 @@ ITEM.functions.Frequency = {
 		end
 		--if (itemTable:GetData("enabled") and itemTable:GetData("active")) then
 		
-		if !itemTable.duplex then
+		if !itemTable:GetData("duplex",itemTable.duplex) then
 			netstream.Start(itemTable.player, "Frequency", itemTable:GetData("frequency", "100.0"))
-		elseif itemTable.duplex then
+		elseif itemTable:GetData("duplex",itemTable.duplex) then
 			netstream.Start(itemTable.player, "FrequencyMenu", {itemTable:GetData("frequency", "100.0"),itemTable:GetData("listenfrequency", "900.0")})
 		end
 		--else
@@ -400,6 +439,19 @@ ITEM.functions.Silence = {
 			end
 		end
 		return false
+	end,
+
+	OnCanRun = function(itemTable)
+		if !ix.config.Get("radioSounds",false) then
+			return false
+		else
+			if !itemTable:GetData("enabled",false) then
+				return false
+			else
+				return true
+			end
+		end
+		
 	end
 }
 
@@ -441,7 +493,7 @@ ITEM.functions.Listen = {
 			character:SetData("scanning",true)
 			--itemTable:SetData("broadcast",false)
 			--character:SetData("channel",itemTable:GetData("channel","1"))
-			local notifyStr = string.format(" on %s MHz", itemTable.duplex and itemTable:GetData("listenfrequency","900.0") or itemTable:GetData("frequency","100.0")) --.." MHz"
+			local notifyStr = string.format(" on %s MHz", itemTable:GetData("duplex",itemTable.duplex) and itemTable:GetData("listenfrequency","900.0") or itemTable:GetData("frequency","100.0")) --.." MHz"
 			local noWalkie = !itemTable.walkietalkie
 			local printStr = string.format("You are now listening to all channels%s.", noWalkie and notifyStr or "")
 			itemTable.player:NotifyLocalized(printStr)
@@ -566,5 +618,118 @@ ITEM.functions.Activate = {
 		end
 
 		return false
+	end,
+
+	OnCanRun = function(itemTable)
+		if !itemTable:GetData("enabled",false) then
+			return false
+		else
+			return true
+		end
+		
+	end
+}
+
+ITEM.functions.Synchronize = {
+	OnRun = function(itemTable)
+		--print(itemTable.radiotypes)
+		local character = itemTable.player:GetCharacter()
+		local inventory = character:GetInventory()
+		
+		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+		--
+		for _,curtype in pairs(itemTable.radiotypes) do
+			local current = inventory:GetItemsByUniqueID(curtype, true)
+			if (#current > 0) then 
+				for k,v in pairs(current) do radios[#radios+1] = v end
+			end
+		end
+
+		if !itemTable:GetData("enabled") then 
+			itemTable:SetData("enabled", true)
+		end
+		
+		if (!itemTable:GetData("active")) then -- if the current radio is on...
+			-- first deactivates all other active radios
+			for k, v in ipairs(radios) do
+				if (v != itemTable and v:GetData("enabled", false) and v:GetData("active",false)) then
+					v:SetData("active",false)
+					--bCanToggle = false
+					--break
+				end
+			end
+			
+			itemTable:SetData("active",true)
+			character:SetData("frequency",itemTable:GetData("frequency","100.0"))
+			character:SetData("channel",itemTable:GetData("channel","1"))
+		end
+		
+		return false
+	end,
+
+	
+	OnCanRun = function(itemTable)
+		if !itemTable.walkietalkie then
+			return false
+		else
+			if !itemTable:GetData("duplex",itemTable.duplex) then
+				return false
+			else
+				return true
+			end
+		end
+		
+	end
+}
+
+ITEM.functions.Scan = {
+	OnRun = function(itemTable)
+		--print(itemTable.radiotypes)
+		local character = itemTable.player:GetCharacter()
+		local inventory = character:GetInventory()
+		
+		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+		--
+		for _,curtype in pairs(itemTable.radiotypes) do
+			local current = inventory:GetItemsByUniqueID(curtype, true)
+			if (#current > 0) then 
+				for k,v in pairs(current) do radios[#radios+1] = v end
+			end
+		end
+
+		if !itemTable:GetData("enabled") then 
+			itemTable:SetData("enabled", true)
+		end
+		
+		if (!itemTable:GetData("active")) then -- if the current radio is on...
+			-- first deactivates all other active radios
+			for k, v in ipairs(radios) do
+				if (v != itemTable and v:GetData("enabled", false) and v:GetData("active",false)) then
+					v:SetData("active",false)
+					--bCanToggle = false
+					--break
+				end
+			end
+			
+			itemTable:SetData("active",true)
+			character:SetData("frequency",itemTable:GetData("frequency","100.0"))
+			character:SetData("channel",itemTable:GetData("channel","1"))
+		end
+		
+		return false
+	end,
+
+	
+	OnCanRun = function(itemTable)
+		if !itemTable.walkietalkie then
+			return false
+		else
+			if itemTable:GetData("duplex",itemTable.duplex) then
+				return false
+			else
+				return true
+			end
+		end
+		
 	end
 }
