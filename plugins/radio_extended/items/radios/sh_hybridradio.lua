@@ -1,11 +1,10 @@
 
-ITEM.name = "Duplex Radio"
-ITEM.description = "A shiny duplex radio%s.\nIt is currently turned %s%s."
-ITEM.duplex = true
+ITEM.name = "Hybrid Radio"
+ITEM.description = "A shiny simplex/duplex radio%s.\nIt is currently turned %s%s."
+ITEM.hybrid = true
 
 -- Inventory drawing
 if (CLIENT) then
-	
 	function ITEM:PaintOver(item, w, h)
 	
 		if (item:GetData("enabled")) then
@@ -31,6 +30,14 @@ if (CLIENT) then
 		if (item:GetData("scanning") and item:GetData("enabled")) then
 			surface.SetDrawColor(255,165, 0, 200)
 			surface.DrawRect(w - 18, h - 14, 2, 8)
+		end
+		
+		-- Hybrid stuff
+		if item:GetData("enabled") and item.hybrid then
+			surface.DrawCircle(w - 10*5.5, h - 10, 4,Color(220, 220, 220, 200))
+			if item:GetData("duplex",false) then
+				surface.DrawCircle(w - 10*4.25, h - 10, 4,Color(220, 220, 220, 200))
+			end
 		end
 	end
 end
