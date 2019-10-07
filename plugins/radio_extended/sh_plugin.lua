@@ -307,6 +307,10 @@ ix.config.Add("radioSounds", true, "Toggles radio sending/receiving beeps & boop
 	category = "Extended Radio"
 })
 
+ix.config.Add("radioOverhear", false, "Toggles being able to see other people's incoming radio messages in the chatbox.", nil, {
+	category = "Extended Radio"
+})
+
 function playSound(target,voiceprefix,sending,distance,radioType) -- Fun new function to more easily play radio send/receive sounds
 
 	-- local maxRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult", 100)
@@ -440,6 +444,14 @@ end
 	-- end
 -- end
 
+if (SERVER) then
+	util.AddNetworkString("ixRadioOverhear")
+	net.Receive("ixRadioOverhear", function(length, client)
+		local message = net.ReadString()
+		ix.chat.Send(player.GetAll()[2], "radio_overhear", message, nil, nil, nil)
+	end)
+end
+
 function PLUGIN:OverwriteClasses()
 	-- 
 	-- Re-registers & overwrites the existing "radio" chat type
@@ -497,7 +509,7 @@ function PLUGIN:OverwriteClasses()
 			local togetherDistance = listener:GetPos():Distance(speaker:GetPos())
 			
 			local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-			local listenerActiveRadio
+			local listenerActiveRadio = false
 			local initialDuplexCheck = false
 			--local radioTypes = {"walkietalkie","longrange"}
 			for _,curtype in pairs(radioTypes) do
@@ -515,7 +527,7 @@ function PLUGIN:OverwriteClasses()
 				end
 			end
 			local bHasRadio = false	
-			
+		
 			
 			-- DUPLEX RADIO STUFF
 			-- If they both don't have a duplex radios, don't bother checking anything about them
@@ -549,7 +561,6 @@ function PLUGIN:OverwriteClasses()
 					--print("Began loop for ",listener)
 					-- Loop over radio items if character variables didn't solve it
 					for k, v in pairs(radios) do 
-						
 						if v:GetData("enabled",false) then -- First check if the radio is on, otherwise ignore it
 						
 							-- Item-level frequency/channel handling
@@ -633,6 +644,13 @@ function PLUGIN:OverwriteClasses()
 					endChatter(listener,togetherDistance,radioSelect.uniqueID)
 				elseif listenerActiveRadio and !listenerActiveRadio:GetData("silenced",false) then
 					endChatter(listener,togetherDistance,listenerActiveRadio.uniqueID)
+				else -- Hacky solution, basically radioSelect and listenerActiveRadio handle everything BUT your active radio... should change how I do inventory searching later
+					for k,v in pairs(inventory:GetItemsByUniqueID("handheld_radio", true)) do
+						if (v:GetData("active",false) and !v:GetData("silenced",false)) then
+							endChatter(listener,togetherDistance,v.uniqueID)
+							break
+						end
+					end
 				end
 				--radioSilence(listener, (1 - self:GetMult()) * listener:GetPos():Distance(speaker:GetPos()), spcharacter:GetData("frequency"))
 			end
@@ -867,7 +885,7 @@ function PLUGIN:OverwriteClasses()
 			-- Sound handling
 			--radioSilence(LocalPlayer(), dist, data.freq)
 			--
-
+			
 			-- If you have more than one radio, and they're on different frequencies, show the frequency next to the name
 			-- Otherwise just show channel
 			if (data.broadcast and !listenWalkie) then
@@ -880,6 +898,19 @@ function PLUGIN:OverwriteClasses()
 			else
 				chat.AddText(newChanColor, theChan, newColor, string.format(self:GetFormat(), name, text))
 			end
+			
+			
+			-- Overhearing other people's incoming transmissions
+			local function radioOverhear(tex)
+				net.Start("ixRadioOverhear")
+					net.WriteString(text)
+				net.SendToServer()
+			end
+			
+			if ix.config.Get("radioOverhear",false) then
+				radioOverhear(text)
+			end
+			
 		end
 
 		ix.chat.Register("radio", CLASS)
@@ -1071,7 +1102,7 @@ function PLUGIN:OverwriteClasses()
 		ix.chat.Register("radio_eavesdrop_yell", CLASS)
 	end
 	
-		do
+	do
 	
 		-- Populates the class with the info from the radio eavesdrop class WITHOUT overwriting the original class
 		local ALIAS
@@ -1124,6 +1155,72 @@ function PLUGIN:OverwriteClasses()
 		CLASS.uniqueID = "radio_eavesdrop_whisper" -- to be sure
 		ix.chat.Register("radio_eavesdrop_whisper", CLASS)
 	end
+	
+	-- 
+	do
+	
+		-- Populates the class with the info from the radio eavesdrop class WITHOUT overwriting the original class
+		-- local ALIAS
+		-- ALIAS = {}
+        -- for orig_key, orig_value in pairs(ix.chat.classes.radio_eavesdrop) do
+            -- ALIAS[orig_key] = orig_value
+        -- end
+		
+		-- local CLASS = ALIAS
+	
+		local CLASS = {}
+		CLASS.color = ix.config.Get("chatColor")
+		CLASS.format = "\"*%s*\""
+
+		function CLASS:GetColor(speaker, text)
+			local color = ix.config.Get("chatColor")
+			
+			-- Make the whisper chat slightly dimmer than IC chat.
+			--return Color(color.r - 35, color.g - 35, color.b - 35)
+			return Color(180,180,180)
+		end
+		
+		function CLASS:GetRange()
+			local range = 0.25*ix.config.Get("chatRange", 280)
+
+			return range
+		end
+
+		function CLASS:CanHear(speaker, listener)
+			--print(speaker,listener)
+			local test = (listener:GetPos():Distance(speaker:GetPos()) <= self:GetRange())
+			if speaker != listener then
+				return test
+			else
+				return false
+			end
+
+		end
+
+		function CLASS:OnChatAdd(speaker, text, bAnonymous, data)	
+			-- Randomly drops at least minDrop and up to maxDrop percent of message, from the start
+			local message = text
+			local minDrop,maxDrop = 0.05,0.3
+			local randDrop = math.min(maxDrop, minDrop + math.random()*maxDrop)
+			local dropStart = math.ceil(randDrop*string.len(message))
+
+			local firstChar = string.sub(string.sub(message, dropStart),0,1)
+
+			while (firstChar == " " or firstChar == "" or firstChar == "-" or firstChar == "," or firstChar == "." or firstChar == "!" or firstChar == "?") and (dropStart <= string.len(message) - 4) do
+				dropStart = dropStart + 1
+				firstChar = string.sub(string.sub(message, dropStart),0,1)
+			end
+			
+			local message = "..."..string.sub(message, dropStart)
+			chat.AddText(self:GetColor(speaker,text), string.format(self.format,message)) -- string.format(self.format, speaker:Name(), text))
+			--end
+		end
+
+		CLASS.uniqueID = "radio_overhear" -- to be sure
+		ix.chat.Register("radio_overhear", CLASS)
+	end
+	
+	
 
 	-- 
 	-- Overwrites the existing "/radio" chat command with new functionality
@@ -2098,3 +2195,10 @@ end
 function PLUGIN:LoadData()
 	self:LoadRadioRepeaters()
 end
+
+-- function PLUGIN:MessageReceived(client,info)
+	-- if client != player.GetAll()[2] and info.chatType == "radio" then --and ix.chat.classes.radio_overhear:CanHear(client,LocalPlayer()) then
+		-- --print(LocalPlayer())
+		-- ix.chat.Send(player.GetAll()[2], "radio_overhear", "*"..info.text.."*", nil, nil, nil)
+	-- end
+-- end
