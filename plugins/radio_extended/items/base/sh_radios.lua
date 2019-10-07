@@ -509,113 +509,179 @@ ITEM.functions.Listen = {
 
 ITEM.functions.Toggle = {
 	OnRun = function(itemTable)
-		local character = itemTable.player:GetCharacter()
-		local inventory = character:GetInventory()
+		-- local character = itemTable.player:GetCharacter()
+		-- local inventory = character:GetInventory()
 		
-		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		--
-		for _,curtype in pairs(radioTypes) do
-			local current = inventory:GetItemsByUniqueID(curtype, true)
-			if (#current > 0) then 
-				for k,v in pairs(current) do radios[#radios+1] = v end
-			end
-		end
-		local bCanToggle = true
+		-- local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+		-- --
+		-- for _,curtype in pairs(radioTypes) do
+			-- local current = inventory:GetItemsByUniqueID(curtype, true)
+			-- if (#current > 0) then 
+				-- for k,v in pairs(current) do radios[#radios+1] = v end
+			-- end
+		-- end
+		-- local bCanToggle = true
 		
-		-- activates the radio if no other powered on radios are in inventory already
-		local enabl = false
-		local activeFreq = ""
-		local keepScanning = false
-		for k, v in ipairs(radios) do
-			if (v != itemTable and v:GetData("enabled", false)) then
-				enabl = true
-				if v:GetData("active", false) then
-					activeFreq = v:GetData("frequency","100.0")
-				end
-				if v:GetData("scanning", false) then
-					keepScanning = true
-				end
-			end
-		end
-		
-		
-		
-		-- for k, v in ipairs(longranges) do
+		-- -- activates the radio if no other powered on radios are in inventory already
+		-- local enabl = false
+		-- local activeFreq = ""
+		-- local keepScanning = false
+		-- for k, v in ipairs(radios) do
 			-- if (v != itemTable and v:GetData("enabled", false)) then
-				-- bCanToggle = false
-				-- break
+				-- enabl = true
+				-- if v:GetData("active", false) then
+					-- activeFreq = v:GetData("frequency","100.0")
+				-- end
+				-- if v:GetData("scanning", false) then
+					-- keepScanning = true
+				-- end
 			-- end
 		-- end
 		
-		bCanToggle = true
-		if (bCanToggle) then
-			itemTable:SetData("enabled", !itemTable:GetData("enabled", false))
+		
+		
+		-- -- for k, v in ipairs(longranges) do
+			-- -- if (v != itemTable and v:GetData("enabled", false)) then
+				-- -- bCanToggle = false
+				-- -- break
+			-- -- end
+		-- -- end
+		
+		-- bCanToggle = true
+		-- if (bCanToggle) then
+			-- itemTable:SetData("enabled", !itemTable:GetData("enabled", false))
 
-			-- Sets frequency to that of currently active radio
-			if (itemTable:GetData("enabled",false)) then
-				if !enabl then
-					itemTable:SetData("active",true)
-					character:SetData("frequency",itemTable:GetData("frequency","100.0"))
-					character:SetData("channel",itemTable:GetData("channel","1"))
-				end
-			else
-				character:SetData("frequency",activeFreq) -- If there's another active radio, make that your current frequency, otherwise clear it
-				itemTable:SetData("active",false)
-				itemTable:SetData("broadcast",false)
-				itemTable:SetData("scanning",false)
-				character:SetData("scanning",keepScanning) -- Since scanning is a character variable, only clear it if there aren't any other scanning radios
-			end
+			-- -- Sets frequency to that of currently active radio
+			-- if (itemTable:GetData("enabled",false)) then
+				-- if !enabl then
+					-- itemTable:SetData("active",true)
+					-- character:SetData("frequency",itemTable:GetData("frequency","100.0"))
+					-- character:SetData("channel",itemTable:GetData("channel","1"))
+				-- end
+			-- else
+				-- character:SetData("frequency",activeFreq) -- If there's another active radio, make that your current frequency, otherwise clear it
+				-- itemTable:SetData("active",false)
+				-- itemTable:SetData("broadcast",false)
+				-- itemTable:SetData("scanning",false)
+				-- character:SetData("scanning",keepScanning) -- Since scanning is a character variable, only clear it if there aren't any other scanning radios
+			-- end
 			
-			itemTable.player:EmitSound("buttons/lever7.wav", 50, math.random(170, 180), 0.25)
-		else
-			itemTable.player:NotifyLocalized("radioAlreadyOn")
-		end
+			-- itemTable.player:EmitSound("buttons/lever7.wav", 50, math.random(170, 180), 0.25)
+		-- else
+			-- itemTable.player:NotifyLocalized("radioAlreadyOn")
+		-- end
 
 		return false
 	end
 }
 
+function ITEM.postHooks.Toggle(item,status)
+	local itemTable = item
+	local character = itemTable.player:GetCharacter()
+	local inventory = character:GetInventory()
+	
+	local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+	--
+	for _,curtype in pairs(radioTypes) do
+		local current = inventory:GetItemsByUniqueID(curtype, true)
+		if (#current > 0) then 
+			for k,v in pairs(current) do radios[#radios+1] = v end
+		end
+	end
+	local bCanToggle = true
+	
+	-- activates the radio if no other powered on radios are in inventory already
+	local enabl = false
+	local activeFreq = ""
+	local keepScanning = false
+	for k, v in ipairs(radios) do
+		if (v != itemTable and v:GetData("enabled", false)) then
+			enabl = true
+			if v:GetData("active", false) then
+				activeFreq = v:GetData("frequency","100.0")
+			end
+			if v:GetData("scanning", false) then
+				keepScanning = true
+			end
+		end
+	end
+	
+	
+	
+	-- for k, v in ipairs(longranges) do
+		-- if (v != itemTable and v:GetData("enabled", false)) then
+			-- bCanToggle = false
+			-- break
+		-- end
+	-- end
+	
+	-- bCanToggle = true
+	-- if (bCanToggle) then
+	itemTable:SetData("enabled", !itemTable:GetData("enabled", false))
+
+	-- Sets frequency to that of currently active radio
+	if (itemTable:GetData("enabled",false)) then
+		if !enabl then
+			itemTable:SetData("active",true)
+			character:SetData("frequency",itemTable:GetData("frequency","100.0"))
+			character:SetData("channel",itemTable:GetData("channel","1"))
+		end
+	else
+		character:SetData("frequency",activeFreq) -- If there's another active radio, make that your current frequency, otherwise clear it
+		itemTable:SetData("active",false)
+		itemTable:SetData("broadcast",false)
+		itemTable:SetData("scanning",false)
+		character:SetData("scanning",keepScanning) -- Since scanning is a character variable, only clear it if there aren't any other scanning radios
+	end
+	
+	itemTable.player:EmitSound("buttons/lever7.wav", 50, math.random(170, 180), 0.25)
+	-- else
+		-- itemTable.player:NotifyLocalized("radioAlreadyOn")
+	-- end
+end
+
 ITEM.functions.Activate = {
 	OnRun = function(itemTable)
-		local character = itemTable.player:GetCharacter()
-		local inventory = character:GetInventory()
+		-- local character = itemTable.player:GetCharacter()
+		-- local inventory = character:GetInventory()
 		
-		local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
-		--
-		for _,curtype in pairs(radioTypes) do
-			local current = inventory:GetItemsByUniqueID(curtype, true)
-			if (#current > 0) then 
-				for k,v in pairs(current) do radios[#radios+1] = v end
-			end
-		end
+		-- local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+		-- --
+		-- for _,curtype in pairs(radioTypes) do
+			-- local current = inventory:GetItemsByUniqueID(curtype, true)
+			-- if (#current > 0) then 
+				-- for k,v in pairs(current) do radios[#radios+1] = v end
+			-- end
+		-- end
 		
-		if (itemTable:GetData("enabled",false)) then -- if the current radio is on...
-			-- first deactivates all other active radios
-			for k, v in ipairs(radios) do
-				if (v != itemTable and v:GetData("enabled", false) and v:GetData("active",false)) then
-					v:SetData("active",false)
-					v:SetData("broadcast",false)
-					--bCanToggle = false
-					--break
-				end
-			end
+		-- if (itemTable:GetData("enabled",false)) then -- if the current radio is on...
+			-- -- first deactivates all other active radios
+			-- for k, v in ipairs(radios) do
+				-- if (v != itemTable and v:GetData("enabled", false) and v:GetData("active",false)) then
+					-- v:SetData("active",false)
+					-- v:SetData("broadcast",false)
+					-- --bCanToggle = false
+					-- --break
+				-- end
+			-- end
 			
-			-- toggles current radio active status
-			itemTable:SetData("active", !itemTable:GetData("active", false))
-			if itemTable:GetData("active") then
-				character:SetData("frequency",itemTable:GetData("frequency","100.0"))
-				character:SetData("channel",itemTable:GetData("channel","1"))
-				itemTable.player:NotifyLocalized("You activated the radio.")
-			else
-				itemTable:SetData("broadcast",false)
-				character:SetData("frequency","")
-				itemTable.player:NotifyLocalized("You deactivated the radio.")
-			end
+			-- -- toggles current radio active status
+			-- itemTable:SetData("active", !itemTable:GetData("active", false))
+			-- print("item is now ",itemTable:GetData("active"))
+			-- if itemTable:GetData("active") then
+				-- character:SetData("frequency",itemTable:GetData("frequency","100.0"))
+				-- character:SetData("channel",itemTable:GetData("channel","1"))
+				-- itemTable.player:NotifyLocalized("You activated the radio.")
+			-- else
+				-- itemTable:SetData("broadcast",false)
+				-- character:SetData("frequency","")
+				-- itemTable.player:NotifyLocalized("You deactivated the radio.")
+			-- end
 			
-			itemTable.player:EmitSound("buttons/lever8.wav", 50, math.random(170, 180), 0.25)
-		--else
-		--	itemTable.player:NotifyLocalized("radioAlreadyOn")
-		end
+			-- itemTable.player:EmitSound("buttons/lever8.wav", 50, math.random(170, 180), 0.25)
+		-- --else
+		-- --	itemTable.player:NotifyLocalized("radioAlreadyOn")
+		-- end
 
 		return false
 	end,
@@ -629,6 +695,50 @@ ITEM.functions.Activate = {
 		
 	end
 }
+
+function ITEM.postHooks.Activate(item, status)
+	local itemTable = item
+	local character = itemTable.player:GetCharacter()
+	local inventory = character:GetInventory()
+	
+	local radios = inventory:GetItemsByUniqueID("handheld_radio", true)
+	--
+	for _,curtype in pairs(radioTypes) do
+		local current = inventory:GetItemsByUniqueID(curtype, true)
+		if (#current > 0) then 
+			for k,v in pairs(current) do radios[#radios+1] = v end
+		end
+	end
+	
+	if (itemTable:GetData("enabled",false)) then -- if the current radio is on...
+		-- first deactivates all other active radios
+		for k, v in ipairs(radios) do
+			if (v != itemTable and v:GetData("enabled", false) and v:GetData("active",false)) then
+				v:SetData("active",false)
+				v:SetData("broadcast",false)
+				--bCanToggle = false
+				--break
+			end
+		end
+		
+		-- toggles current radio active status
+		itemTable:SetData("active", !itemTable:GetData("active", false))
+		--print("item is now ",itemTable:GetData("active"))
+		if itemTable:GetData("active") then
+			character:SetData("frequency",itemTable:GetData("frequency","100.0"))
+			character:SetData("channel",itemTable:GetData("channel","1"))
+			itemTable.player:NotifyLocalized("You activated the radio.")
+		else
+			itemTable:SetData("broadcast",false)
+			character:SetData("frequency","")
+			itemTable.player:NotifyLocalized("You deactivated the radio.")
+		end
+		
+		itemTable.player:EmitSound("buttons/lever8.wav", 50, math.random(170, 180), 0.25)
+	--else
+	--	itemTable.player:NotifyLocalized("radioAlreadyOn")
+	end
+end
 
 ITEM.functions.Synchronize = {
 	OnRun = function(itemTable)
