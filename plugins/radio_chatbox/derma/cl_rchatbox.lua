@@ -33,8 +33,6 @@ function PLUGIN:LoadFonts(font, genericFont)
 	})
 end
 
-
-
 local chatBorder = 32
 local maxChatEntries = 50
 
@@ -393,7 +391,7 @@ function PANEL:AddMessage(...)
 		bShown = true
 	end
 
-	if (bShown) then
+	if (bShown and !ix.config.Get("radioSounds", false)) then
 		chat.PlaySound()
 	end
 end
