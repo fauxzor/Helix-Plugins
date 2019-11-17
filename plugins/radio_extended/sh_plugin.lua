@@ -311,6 +311,10 @@ ix.config.Add("radioOverhear", false, "Toggles being able to see other people's 
 	category = "Extended Radio"
 })
 
+ix.config.Add("hearSelf", false, "Toggles being able to see your own radio calls in the chatbox.", nil, {
+	category = "Extended Radio"
+})
+
 function playSound(target,voiceprefix,sending,distance,radioType) -- Fun new function to more easily play radio send/receive sounds
 
 	-- local maxRange = ix.config.Get("chatRange",280) * ix.config.Get("radioRangeMult", 100)
@@ -637,6 +641,10 @@ function PLUGIN:OverwriteClasses()
 						end
 					end
 				end
+			end
+			
+			if (ix.config.Get("hearSelf")) and (speaker == listener) then
+				bHasRadio = true
 			end
 
 			if bHasRadio and (speaker != listener) then
