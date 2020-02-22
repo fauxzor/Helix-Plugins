@@ -307,9 +307,9 @@ ix.config.Add("radioSounds", true, "Toggles radio sending/receiving beeps & boop
 	category = "Extended Radio"
 })
 
-ix.config.Add("radioOverhear", false, "Toggles being able to see other people's incoming radio messages in the chatbox.", nil, {
-	category = "Extended Radio"
-})
+--ix.config.Add("radioOverhear", false, "Toggles being able to see other people's incoming radio messages in the chatbox.", nil, {
+--	category = "Extended Radio"
+--})
 
 ix.config.Add("hearSelf", false, "Toggles being able to see your own radio calls in the chatbox.", nil, {
 	category = "Extended Radio"
@@ -448,13 +448,13 @@ end
 	-- end
 -- end
 
-if (SERVER) then
-	util.AddNetworkString("ixRadioOverhear")
-	net.Receive("ixRadioOverhear", function(length, client)
-		local message = net.ReadString()
-		ix.chat.Send(player.GetAll()[2], "radio_overhear", message, nil, nil, nil)
-	end)
-end
+--if (SERVER) then
+--	util.AddNetworkString("ixRadioOverhear")
+--	net.Receive("ixRadioOverhear", function(length, client)
+--		local message = net.ReadString()
+--		ix.chat.Send(player.GetAll()[2], "radio_overhear", message, nil, nil, nil)
+--	end)
+--end
 
 function PLUGIN:OverwriteClasses()
 	-- 
@@ -667,6 +667,7 @@ function PLUGIN:OverwriteClasses()
 			--print(listener, " heard: ",bHasRadio)
 			
 			--zprint(listener,bHasRadio)
+			--print(listener,bHasRadio)
 			return bHasRadio
 		end
 
@@ -909,15 +910,15 @@ function PLUGIN:OverwriteClasses()
 			
 			
 			-- Overhearing other people's incoming transmissions
-			local function radioOverhear(tex)
-				net.Start("ixRadioOverhear")
-					net.WriteString(text)
-				net.SendToServer()
-			end
+			--local function radioOverhear(tex)
+			--	net.Start("ixRadioOverhear")
+			--		net.WriteString(text)
+			--	net.SendToServer()
+			--end
 			
-			if ix.config.Get("radioOverhear",false) then
-				radioOverhear(text)
-			end
+			--if ix.config.Get("radioOverhear",false) then
+			--	radioOverhear(text)
+			--end
 			
 		end
 
