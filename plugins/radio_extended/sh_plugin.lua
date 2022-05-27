@@ -1434,9 +1434,9 @@ function PLUGIN:OverwriteClasses()
 			if ( (item) and !item:GetData("scanning",false) ) or ( (item) and item:GetData("scanning",false) and item:GetData("broadcast",false) ) then
 				if (!client:IsRestricted()) then
 
-					if (item:GetData("duplex",item.duplex) and bRepeater != false) or (!item:GetData("duplex",item.duplex)) then
+					--if (item:GetData("duplex",item.duplex) and bRepeater != false) or (!item:GetData("duplex",item.duplex)) then
 						ix.chat.Send(client, "radio_yell", message,nil,nil,{repeater=bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
-					end
+					--end
 						ix.chat.Send(client, "radio_eavesdrop_yell", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
@@ -1538,9 +1538,9 @@ function PLUGIN:OverwriteClasses()
 			if ( (item) and !item:GetData("scanning",false) ) or ( (item) and item:GetData("scanning",false) and item:GetData("broadcast",false) ) then
 				if (!client:IsRestricted()) then
 
-					if (item:GetData("duplex",item.duplex) and bRepeater != false) or (!item:GetData("duplex",item.duplex)) then
+					--if (item:GetData("duplex",item.duplex) and bRepeater != false) or (!item:GetData("duplex",item.duplex)) then
 						ix.chat.Send(client, "radio_whisper", message,nil,nil,{repeater=bRepeater, broadcast = broadcasting, callsign=call, walkie = transmitWalkie, lrange=transmitLong, freq=client:GetCharacter():GetData("frequency"), chan=client:GetCharacter():GetData("channel")})
-					end
+					--end
 						ix.chat.Send(client, "radio_eavesdrop_whisper", message,nil,nil,{quiet=item:GetData("silenced"),walkie = transmitWalkie})
 					--endChatter(client,0)
 					--playSound(client, "npc/metropolice/vo/on", true)
